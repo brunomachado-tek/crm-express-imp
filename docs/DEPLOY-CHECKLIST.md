@@ -11,22 +11,22 @@
 
 ---
 
-## Parte 0 — Decisões de conta (defina antes de começar)
+## Parte 0 — Decisões de conta (DEFINIDAS em 2026-08-02)
 
-Preencha o "→" de cada linha. É isto que você pediu para definir.
-
-| Serviço | Decisão a tomar | Sua escolha |
+| Serviço | Decisão | Escolha do Bruno |
 |---|---|---|
-| **GitHub** | Onde fica o código. Conta pessoal sua? Conta da Teknisa/TSEA? Criar uma nova? O repo deve ser **privado** (é código interno com lógica de negócio). | → |
-| **Neon** (Postgres) | Em qual login criar. Dá para entrar com Google. Usa seu Google pessoal ou um da Teknisa? | → |
-| **Netlify** | Você já tem conta (a da landing TSEA). Usa a **mesma** conta ou cria uma separada para o CRM? | → |
-| **Domínio** | Vai ficar em `algo.netlify.app` por enquanto, ou já quer um subdomínio Teknisa (ex.: `crm.teknisa.com`) via CNAME, como no TSEA? Isso pode ficar para depois do primeiro deploy. | → |
-| **SMTP (e-mail)** | De onde saem os convites e redefinição de senha: o webmail interno da Teknisa. Precisa dos dados de SMTP (host, porta, usuário, senha, remetente) do TI. **Sem isso, ninguém consegue ser convidado em produção.** Já tem esses dados? | → |
+| **GitHub** | Onde fica o código (repo **privado**). | ✅ Criar/usar conta com **e-mail Teknisa**. |
+| **Neon** (Postgres) | Login para criar o banco. | ✅ **Criar conta Teknisa** nova. |
+| **Netlify** | Conta de hospedagem. | ✅ **A mesma da TSEA** (a que já hospeda a landing). |
+| **Domínio** | Endereço público. | ✅ Nome do site Netlify **`crm-express-teknisa`** → endereço `crm-express-teknisa.netlify.app`. Subdomínio próprio (`.teknisa.com`) fica para depois, precisa do DNS com o TI. |
+| **SMTP (e-mail)** | Envio de convite / redefinição. | ⏳ **Ainda não tem os dados** do TI. Sobe sem SMTP por ora. |
 
-> Se alguma decisão depender do TI da Teknisa (SMTP, subdomínio), dá para subir o
-> sistema mesmo assim e ligar depois: só não convide ninguém real até o SMTP estar
-> configurado. Para você testar sozinho, o primeiro acesso da diretoria sai no log
-> do build (passo 5).
+> **Consequência de subir sem SMTP:** em produção o link de convite/redefinição
+> **não é enviado nem aparece na tela** (blindagem de segurança). Você mesmo
+> **consegue entrar**, porque o link da conta da diretoria sai no **log do build**
+> (Parte 5). Mas **não dá para convidar o time real pela tela de Equipe** enquanto
+> o SMTP não estiver configurado. Ou seja: sobe agora para testar sozinho, e o
+> convite do time fica travado até você conseguir os dados de SMTP com o TI.
 
 ---
 
@@ -80,11 +80,14 @@ testar antes). O seu ambiente local **continua em SQLite**, sem mudança no dia 
 | Variável | O que pôr |
 |---|---|
 | `DATABASE_URL` | a connection string do Neon (Parte 2) |
-| `APP_URL` | a URL do site que o Netlify te der (ex.: `https://crm-express.netlify.app`) |
+| `APP_URL` | `https://crm-express-teknisa.netlify.app` |
 | `ALLOWED_EMAIL_DOMAIN` | `teknisa.com` |
-| `SMTP_HOST` `SMTP_PORT` `SMTP_USER` `SMTP_PASS` `SMTP_FROM` | dados do webmail Teknisa (do TI) |
+| `SMTP_HOST` `SMTP_PORT` `SMTP_USER` `SMTP_PASS` `SMTP_FROM` | ⏳ **pular por enquanto** (sem dados do TI). Deixar de fora até ter o SMTP. |
 | `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` | uma chave fixa; gere no terminal com o comando abaixo |
 | `SEED_DEMO` | **não criar** essa variável (é o que mantém produção sem as contas de teste) |
+
+> Na criação do site, o Netlify pede o nome: digite **`crm-express-teknisa`** para
+> o endereço sair como `crm-express-teknisa.netlify.app` (o mesmo que já pôs no `APP_URL`).
 
 Para gerar a chave de criptografia (rode no seu terminal e cole o resultado no Netlify):
 
