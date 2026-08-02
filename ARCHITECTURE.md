@@ -16,16 +16,14 @@ cronograma → implantação → go-live → acompanhamento → CS.
 - **Linguagem:** TypeScript · **UI:** React + Tailwind CSS v4 · **Ícones:** lucide-react
 - **ORM:** Prisma (`prisma db push`, **sem pasta de migrations** — schema sincronizado
   direto)
-- **Banco:** SQLite em dev (`prisma/dev.db`); **Postgres (Neon) em produção** via `DATABASE_URL`
+- **Banco:** **Postgres (Neon)** em dev e produção via `DATABASE_URL` (desde 2026-08-02;
+  antes era SQLite em dev). Um schema só, sem divergência.
+- **Anexos:** guardados **no próprio banco** (`ProjectDocument.data` Bytes), não em
+  disco (o serverless do Netlify não persiste disco).
 - **Email:** nodemailer (SMTP) · **Arquivos:** `unpdf` (leitura de PDF de contrato),
   `xlsx` (import/export de cronograma)
 - **Hospedagem:** Netlify com `@netlify/plugin-nextjs` (Server Actions e rotas viram
   funções serverless)
-
-> ⚠️ **Ponto de atenção:** `prisma/schema.prisma` declara `provider = "sqlite"`, mas a
-> produção aponta `DATABASE_URL` para Postgres. O provider do Prisma precisa casar com
-> o banco real. Validar o comportamento do `netlify:build` (`prisma db push`) contra o
-> Neon — é um risco conhecido a confirmar, não um fato resolvido.
 
 ---
 

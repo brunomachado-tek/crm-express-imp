@@ -55,18 +55,21 @@ Subir para o GitHub é a primeira rede de segurança de verdade.
 
 ---
 
-## Parte 3 — Migração do código para Postgres — **[CLAUDE]**
+## Parte 3 — Migração do código para Postgres — **[CLAUDE] ✅ FEITA (2026-08-02)**
 
-Assim que o repo estiver no GitHub (Parte 1), eu faço, **numa branch separada**:
+Aplicada em 2026-08-02 (commit `ccd6594`), decisão: **Postgres em dev e produção**,
+um schema só, sem divergência. Feito:
 
-- [ ] **[CLAUDE]** Trocar o banco de SQLite para PostgreSQL no `schema.prisma`.
-- [ ] **[CLAUDE]** Fazer os anexos (PDFs) serem guardados **dentro do banco**, já
+- [x] `schema.prisma`: provider `postgresql`.
+- [x] Anexos (PDFs) guardados **dentro do banco** (`data`/`mimeType`/`size`), já
       que o Netlify não tem disco que persista.
-- [ ] **[CLAUDE]** Ajustar a busca de cliente para não diferenciar maiúsculas
-      (o Postgres diferencia por padrão) e alinhar o limite de upload (~6 MB).
+- [x] Busca de cliente com `mode: "insensitive"` (o Postgres diferencia maiúsculas).
+- [x] Teto de upload alinhado ao limite das funções do Netlify (4 MB).
 
-Isto só é validado de verdade no primeiro deploy (não tenho Postgres aqui para
-testar antes). O seu ambiente local **continua em SQLite**, sem mudança no dia a dia.
+Verificado local: `tsc` e `next build` limpos. O `db push` + runtime só validam no
+**primeiro deploy** (não há Postgres no ambiente de desenvolvimento do Claude).
+**O ambiente local agora também usa Postgres** (aponte o `DATABASE_URL` para uma
+branch de dev do Neon se precisar rodar local).
 
 ---
 
@@ -121,5 +124,5 @@ openssl rand -hex 32
 
 1. **[VOCÊ]** decide as contas (Parte 0), cria GitHub + Neon + Netlify, cola as variáveis.
 2. **[VOCÊ]** me manda: a URL do repo (Parte 1) e o aviso de deploy pronto (Parte 4).
-3. **[CLAUDE]** faço o push inicial e a migração SQLite→Postgres, e verifico o
-   primeiro deploy end-to-end (login, cadastro por PDF, upload de anexo).
+3. **[CLAUDE]** ✅ push inicial e migração SQLite→Postgres já feitos. Falta eu
+   verificar o primeiro deploy end-to-end (login, cadastro por PDF, upload de anexo).

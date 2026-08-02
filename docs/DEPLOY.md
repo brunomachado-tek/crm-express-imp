@@ -80,8 +80,9 @@ teste no primeiro deploy):
 ## Observações
 - **Teste real**: a migração de banco só é validada de verdade no primeiro
   deploy (não há Postgres no ambiente de desenvolvimento do Claude).
-- **Local continua com SQLite**: o desenvolvimento e os testes do dia a dia
-  seguem em SQLite; a branch de deploy é que usa Postgres.
+- **Postgres em dev e produção** (decidido em 2026-08-02): um schema só, sem
+  divergência. Para rodar local, aponte o `DATABASE_URL` para uma branch de dev
+  do Neon. Não há mais SQLite no projeto.
 - **Limite de arquivo**: as funções do Netlify aceitam ~6 MB por upload. PDFs
   maiores que isso vão falhar; se virar necessidade, migramos os anexos para um
   storage dedicado (Netlify Blobs).

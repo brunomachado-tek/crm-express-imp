@@ -8,6 +8,20 @@ vocabulário honesto: ✅ no ar · 🔨 construído, não entregue · 🌿 só e
 
 ---
 
+## 2026-08-02 — Migração SQLite → Postgres + GitHub
+
+- **Código no GitHub:** repo privado `brunomachado-tek/crm-express-imp`, branch `main`.
+  Autenticação resolvida (conta Teknisa `brunomachado-tek`, não a pessoal). 🔨
+- **Migração para Postgres** (commit `ccd6594`). Decisão: **Postgres em dev e prod**,
+  um schema só (o Netlify+Neon é temporário; destino final é o servidor da Teknisa).
+  - `schema.prisma`: provider `postgresql`.
+  - Anexos passam a ser guardados **no banco** (`ProjectDocument.data`/`mimeType`/`size`);
+    upload/download/delete não tocam mais o disco (serverless não persiste).
+  - Busca de cliente `mode: "insensitive"`; teto de upload 8→4 MB, bodySizeLimit 10→5 MB.
+  - ✅ `tsc` e `next build` limpos. `db push` + runtime validam no 1º deploy.
+- ⏳ **Próximo:** Bruno cria Neon + configura Netlify (env vars, sem SMTP por ora);
+  depois eu verifico o primeiro deploy end-to-end. Ver `docs/DEPLOY-CHECKLIST.md`.
+
 ## 2026-08-02 — UI: mini-tendência do SLA médio no padrão limpo
 
 - Card "SLA médio de implantação" (aba SLA e Gargalos): a mini-tendência por mês de
