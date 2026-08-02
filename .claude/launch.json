@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "crm-express",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "/Users/brunomachado/Desktop/Claude/CRM TEK - Express/crm-express",
+      "port": 3000
+    }
+  ]
+}

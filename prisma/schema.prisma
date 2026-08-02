@@ -1,0 +1,556 @@
+// CRM Express — Teknisa Small Business
+// SQLite em dev; trocar provider/url por Postgres quando a infra for definida.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Usuários e acesso ───────────────────────────────────────────────
+
+enum Role {
+  DIRETORIA
+  COORDENACAO
+  CONSULTOR
+  CS
+}
+
+enum ProductLine {
+  RETAIL
+  TECFOOD
+}
+
+enum Seniority {
+  JUNIOR
+  PLENO
+  SENIOR
+}
+
+// Fluxo de liberação de acesso: quem se cadastra sozinho pelo "primeiro acesso"
+// entra como PENDENTE e só usa o sistema depois que a diretoria (ou a
+// coordenação do produto) aprova e confirma o papel.
+enum AccessStatus {
+  PENDENTE
+  APROVADO
+  RECUSADO
+}
+
+model User {
+  id           String       @id @default(cuid())
+  name         String
+  email        String       @unique
+  passwordHash String? // null = conta pré-cadastrada aguardando primeiro acesso
+  role         Role // enquanto PENDENTE, guarda o papel *solicitado*
+  productLine  ProductLine? // null = enxerga tudo (diretoria)
+  seniority    Seniority?
+  active       Boolean      @default(true)
+  status       AccessStatus @default(APROVADO) // convidados já nascem aprovados
+  // Decisão de acesso: quando e por quem. Vale para os dois desfechos, e o
+  // `status` (APROVADO/RECUSADO) diz qual foi. É o log de quem liberou quem.
+  approvedAt   DateTime?
+  approvedById String?
+  // "Apagar" um usuário é arquivar: ele perde o acesso e some das listas, mas o
+  // registro continua para que comentários, movimentações e conclusões
+  // preservem o autor (exigência da gestão).
+  deletedAt    DateTime?
+  awayUntil    DateTime? // férias/afastamento
+  createdAt    DateTime     @default(now())
+
+  sessions           Session[]
+  projectsAsConsult  Project[]         @relation("consultant")
+  activities         ProjectActivity[] @relation("assignee")
+  delegatedFrom      ProjectActivity[] @relation("delegatedFrom")
+  stageTransitions   StageTransition[]
+  delayJustification DelayJustification[]
+  notifications      Notification[]
+  checklistDone      ProjectChecklistItem[]
+  healthLogs         HealthLog[]
+  timelineEntries    TimelineEntry[]
+  uploadedDocuments  ProjectDocument[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+// Convite de novo usuário (criado sem senha por diretoria/coordenação).
+model InviteToken {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  userId      String
+  invitedById String?
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+// ─── Cliente e contratos ─────────────────────────────────────────────
+
+model Client {
+  id             String      @id @default(cuid())
+  razaoSocial    String
+  nomeFantasia   String?
+  cnpj           String?     @unique
+  endereco       String?
+  cep            String?
+  cidade         String?
+  uf             String?
+  propostaNumero String? // número-raiz das propostas (ex.: 037472)
+  notes          String?
+  // "Apagar" um cliente arquiva por padrão: some das listas, do funil e do
+  // dashboard, mas o registro e o histórico ficam. A diretoria ainda pode
+  // apagar em definitivo (aí o cascade remove tudo). deletedAt = arquivado.
+  deletedAt      DateTime?
+  createdAt      DateTime    @default(now())
+
+  contacts   Contact[]
+  contracts  Contract[]
+  projects   Project[]
+  healthLogs HealthLog[]
+}
+
+model Contact {
+  id       String  @id @default(cuid())
+  clientId String
+  client   Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  nome     String
+  email    String?
+  telefone String?
+  cargo    String? // ex.: sócia, nutricionista, comprador
+}
+
+enum ContractKind {
+  SAAS // Gestão de Infraestrutura em Nuvem
+  LUSO // Licenciamento e Manutenção de Software
+  ADITIVO
+  OUTRO
+}
+
+model Contract {
+  id             String       @id @default(cuid())
+  clientId       String
+  client         Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  projectId      String?
+  project        Project?     @relation(fields: [projectId], references: [id])
+  kind           ContractKind
+  numero         String       @unique // ex.: LUSO-202604037472-01
+  dataAssinatura DateTime?
+  vigenciaMeses  Int? // 24
+  valorLicenca   Float? // one-time
+  valorMensal    Float? // manutenção mensal
+  limiteSaasMb   Int? // contrato SAAS
+  horasTreinamento Int? // cláusula SERVIÇO (ex.: 24)
+  // Janela contratual para concluir o treinamento, contada da assinatura.
+  // Vem da cláusula SERVIÇO e varia por cliente (o padrão comum é 60 dias).
+  prazoTreinamentoDias Int? @default(60)
+  contatoTeknisa String? // vendedor/qualificador no contrato
+  isAditivo      Boolean      @default(false)
+  notes          String?
+  createdAt      DateTime     @default(now())
+
+  items ContractItem[]
+}
+
+// Documentos e anexos do projeto (contrato assinado, aditivo, comprovante,
+// etc.). Ligado ao projeto, não a um contrato específico: evita a pergunta
+// "em qual contrato anexo isso" e permite vários arquivos, cada um excluível.
+model ProjectDocument {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  filename     String // nome original do arquivo
+  uploadedById String?
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id])
+  uploadedAt   DateTime @default(now())
+}
+
+enum ContractItemKind {
+  LICENCA
+  MANUTENCAO
+}
+
+model ContractItem {
+  id         String           @id @default(cuid())
+  contractId String
+  contract   Contract         @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  kind       ContractItemKind
+  solucao    String // ex.: "Teknisa TecFood", "APP TecFood MyMenu"
+  tipoMedida String? // ex.: "Filial TecFood"
+  qtde       Int              @default(1)
+  valorUnit  Float?
+  desconto   Float?           @default(0)
+  valorTotal Float?
+}
+
+// ─── Repasse comercial → implantação ────────────────────────────────
+// Substitui a reunião de repasse: um formulário por cliente, gerado após a
+// assinatura, preenchido pelo comercial por link público (sem login) e
+// importado para o CRM ao ser enviado. Os campos acompanham as etapas
+// definidas em src/lib/intake.ts (ajustar lá e aqui quando o time revisar).
+
+enum IntakeStatus {
+  RASCUNHO
+  ENVIADO
+}
+
+model ClientIntake {
+  id            String       @id @default(cuid())
+  projectId     String       @unique
+  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  token         String       @unique // link público
+  status        IntakeStatus @default(RASCUNHO)
+  etapaAtual    Int          @default(1)
+  preenchidoPor String? // quem preencheu (comercial), texto livre
+  submittedAt   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  // 1. Empresa
+  razaoSocial  String?
+  nomeFantasia String?
+  cnpj         String?
+  cep          String?
+  endereco     String?
+  cidade       String?
+  uf           String?
+  segmento     String?
+  numUnidades  Int?
+
+  // 2. Contatos
+  contatoPrincipalNome     String?
+  contatoPrincipalCargo    String?
+  contatoPrincipalEmail    String?
+  contatoPrincipalTelefone String?
+  contatoOperacaoNome      String?
+  contatoOperacaoTelefone  String?
+  contatoTiNome            String?
+  contatoTiTelefone        String?
+
+  // 3. Operação
+  refeicoesDia     String?
+  periodos         String? // múltipla escolha serializada
+  tiposServico     String? // múltipla escolha serializada
+  fichaTecnica     String?
+  nutricionista    String?
+  sistemaAtual     String?
+  migrarDados      String?
+  producaoPropria  String?
+  contextoOperacao String?
+
+  // 4. Contratação
+  modulos                String? // múltipla escolha serializada
+  numLicencas            Int?
+  goLiveDesejado         DateTime?
+  urgencia               String?
+  formatoTreinamento     String?
+  pessoasTreinamento     Int?
+  observacoesContratacao String?
+
+  // 5. Fiscal e observações
+  regimeTributario        String?
+  documentosFiscais       String? // múltipla escolha serializada
+  certificadoDigital      String?
+  particularidadesFiscais String?
+  observacoesGerais       String?
+  pontosAtencao           String?
+}
+
+// ─── Templates: módulos, atividades, checklists, SLA ────────────────
+
+// Grupo do módulo no catálogo de implantação:
+//  FIXO      = moldura da implantação, entra em todo projeto (abertura,
+//              cadastros iniciais, encerramento). Não é selecionável no cadastro.
+//  BASICO    = escopo básico (Planejamento, Estoque, Custo, DF Entrada, DF Saída).
+//  COMPLETO  = adicionais do escopo completo (Compras, Financeiro, Faturamento).
+//  ADICIONAL = produto à parte (ex.: APP MyMenu), independente de básico/completo.
+enum ModuloGrupo {
+  FIXO
+  BASICO
+  COMPLETO
+  ADICIONAL
+}
+
+model ModuleTemplate {
+  id          String      @id @default(cuid())
+  productLine ProductLine
+  nome        String
+  descricao   String?
+  grupo       ModuloGrupo @default(BASICO)
+  active      Boolean     @default(true)
+  ordem       Int         @default(0)
+
+  activities     ActivityTemplate[]
+  projectModules ProjectModule[]
+}
+
+enum Responsavel {
+  TEKNISA
+  CLIENTE
+  AMBOS
+}
+
+model ActivityTemplate {
+  id               String          @id @default(cuid())
+  moduleTemplateId String? // null = atividade comum a qualquer projeto do produto
+  moduleTemplate   ModuleTemplate? @relation(fields: [moduleTemplateId], references: [id], onDelete: Cascade)
+  productLine      ProductLine
+  titulo           String
+  descricao        String? // 1 parágrafo
+  horas            Float?
+  numReunioes      Int?            @default(0)
+  responsavel      Responsavel     @default(AMBOS)
+  pautas           String? // pautas da(s) reunião(ões)
+  envolvidosCliente String? // papéis esperados (ex.: "nutricionista ou responsável pelo cardápio")
+  ordem            Int             @default(0)
+  dedupKey         String? // atividades com a mesma chave não se repetem quando vários módulos as incluem
+  active           Boolean         @default(true)
+
+  projectActivities ProjectActivity[]
+}
+
+// Checklist obrigatório para mover o card de etapa (modelo por etapa da pipeline)
+model StageChecklistTemplate {
+  id      String        @id @default(cuid())
+  stageId String
+  stage   PipelineStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  titulo  String
+  ordem   Int           @default(0)
+  active  Boolean       @default(true)
+}
+
+model DelayCategory {
+  id     String  @id @default(cuid())
+  nome   String  @unique
+  active Boolean @default(true)
+
+  justifications DelayJustification[]
+}
+
+// ─── Pipeline (etapas do funil, editáveis) ───────────────────────────
+// As etapas deixaram de ser um enum fixo: a diretoria pode criar, renomear,
+// reordenar, apagar e definir o prazo (SLA) de cada etapa em /pipeline.
+model PipelineStage {
+  id        String   @id @default(cuid())
+  nome      String
+  ordem     Int
+  idealDays Int? // prazo ideal (SLA) em dias corridos; null = sem prazo
+  isFinal   Boolean  @default(false) // etapa terminal: conta como projeto concluído
+  createdAt DateTime @default(now())
+
+  projects           Project[]
+  checklistTemplates StageChecklistTemplate[]
+  checklistItems     ProjectChecklistItem[]
+  delays             DelayJustification[]
+  transitionsFrom    StageTransition[]        @relation("fromStage")
+  transitionsTo      StageTransition[]        @relation("toStage")
+}
+
+// ─── Projeto (implantação) ───────────────────────────────────────────
+
+enum ProjectStatus {
+  ATIVO
+  PAUSADO
+  CANCELADO
+}
+
+model Project {
+  id             String        @id @default(cuid())
+  clientId       String
+  client         Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  productLine    ProductLine
+  nome           String? // ex.: "Implantação TecFood Express" (default por produto)
+  stageId        String
+  stage          PipelineStage @relation(fields: [stageId], references: [id])
+  status         ProjectStatus @default(ATIVO)
+  deleted        Boolean       @default(false) // "apagar" é soft delete: vira indicador
+  consultantId   String?
+  consultant     User?         @relation("consultant", fields: [consultantId], references: [id])
+  peso           Int?          @default(1) // complexidade simples 1-3
+  dataContrato   DateTime? // assinatura (âncora dos marcos contratuais)
+  dataInicio     DateTime?
+  goLivePrevisto DateTime?
+  goLiveReal     DateTime?
+  dataFinalizacao DateTime?
+  stageEnteredAt DateTime      @default(now()) // quando entrou na etapa atual
+  isHistorico    Boolean       @default(false) // cadastro retroativo de projetos antigos
+  notes          String?
+  createdAt      DateTime      @default(now())
+
+  contracts        Contract[]
+  intake           ClientIntake?
+  modules          ProjectModule[]
+  units            ProjectUnit[]
+  activities       ProjectActivity[]
+  transitions      StageTransition[]
+  pauses           ProjectPause[]
+  delays           DelayJustification[]
+  checklist        ProjectChecklistItem[]
+  notifications    Notification[]
+  timelineEntries  TimelineEntry[]
+  documents        ProjectDocument[]
+}
+
+model ProjectUnit {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  nome      String // ex.: "Loja Centro"
+  cidade    String?
+  uf        String?
+  concluida Boolean @default(false)
+}
+
+model ProjectModule {
+  id               String         @id @default(cuid())
+  projectId        String
+  project          Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  moduleTemplateId String
+  moduleTemplate   ModuleTemplate @relation(fields: [moduleTemplateId], references: [id])
+  isAditivo        Boolean        @default(false) // novo módulo comprado depois — destaque no card
+  addedAt          DateTime       @default(now())
+
+  @@unique([projectId, moduleTemplateId])
+}
+
+enum ActivityStatus {
+  PENDENTE
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+model ProjectActivity {
+  id              String            @id @default(cuid())
+  projectId       String
+  project         Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  templateId      String?
+  template        ActivityTemplate? @relation(fields: [templateId], references: [id])
+  titulo          String
+  descricao       String?
+  fase            String? // agrupamento livre (ex.: "Cadastros iniciais", "Treinamento")
+  horas           Float?
+  numReunioes     Int?              @default(0)
+  responsavel     Responsavel       @default(AMBOS)
+  pautas          String?
+  envolvidosCliente String?
+  status          ActivityStatus    @default(PENDENTE)
+  dueDate         DateTime? // entrega combinada
+  scheduledAt     DateTime? // reunião agendada com o cliente
+  assigneeId      String?
+  assignee        User?             @relation("assignee", fields: [assigneeId], references: [id])
+  delegatedFromId String? // repasse temporário (férias etc.)
+  delegatedFrom   User?             @relation("delegatedFrom", fields: [delegatedFromId], references: [id])
+  ordem           Int               @default(0)
+  completedAt     DateTime?
+  createdAt       DateTime          @default(now())
+}
+
+// Checklist instanciado por etapa do projeto (cópia do template no momento da entrada na etapa)
+model ProjectChecklistItem {
+  id        String        @id @default(cuid())
+  projectId String
+  project   Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stageId   String
+  stage     PipelineStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  titulo    String
+  ordem     Int           @default(0)
+  done      Boolean       @default(false)
+  doneById  String?
+  doneBy    User?         @relation(fields: [doneById], references: [id])
+  doneAt    DateTime?
+}
+
+// ─── SLA: transições, pausas, atrasos ───────────────────────────────
+
+model StageTransition {
+  id          String         @id @default(cuid())
+  projectId   String
+  project     Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fromStageId String?
+  fromStage   PipelineStage? @relation("fromStage", fields: [fromStageId], references: [id], onDelete: SetNull)
+  toStageId   String
+  toStage     PipelineStage  @relation("toStage", fields: [toStageId], references: [id], onDelete: Cascade)
+  byUserId    String?
+  byUser      User?          @relation(fields: [byUserId], references: [id])
+  at          DateTime       @default(now())
+  note        String?
+}
+
+// Pausa "relógio Teknisa": pendência do cliente ou pausa formal do projeto
+model ProjectPause {
+  id        String    @id @default(cuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+  motivo    String?
+}
+
+model DelayJustification {
+  id         String        @id @default(cuid())
+  projectId  String
+  project    Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stageId    String
+  stage      PipelineStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   DelayCategory @relation(fields: [categoryId], references: [id])
+  detalhe    String?
+  byUserId   String?
+  byUser     User?         @relation(fields: [byUserId], references: [id])
+  at         DateTime      @default(now())
+}
+
+// ─── Timeline, notificações, CS ─────────────────────────────────────
+
+model TimelineEntry {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tipo      String // COMENTARIO | SISTEMA | HANDOFF | ...
+  texto     String
+  byUserId  String?
+  byUser    User?    @relation(fields: [byUserId], references: [id])
+  at        DateTime @default(now())
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String? // null = broadcast para diretoria/coordenação
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String?
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tipo      String // NOVO_PROJETO | ATRASO_SLA | MARCO_CONTRATUAL | ...
+  titulo    String
+  corpo     String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model HealthLog {
+  id       String   @id @default(cuid())
+  clientId String
+  client   Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  score    Int // 1-5
+  note     String?
+  byUserId String?
+  byUser   User?    @relation(fields: [byUserId], references: [id])
+  at       DateTime @default(now())
+}

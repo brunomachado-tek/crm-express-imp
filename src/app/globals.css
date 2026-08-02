@@ -1,26 +1,48 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Paleta oficial Teknisa — Guia de Aplicação de Marca 2025
+   Principal: #040486 · Secundárias: #03004F #0051D0 #0800B7 #F2F6FB
+   Complementares: #059E1E #F4B800 · Texto: #273138 */
+@theme {
+  --color-background: #f2f6fb;
+  --color-card: #ffffff;
+  --color-foreground: #273138;
+  --color-muted: #e8eef7;
+  --color-muted-foreground: #64748b;
+  --color-border: #dde5f0;
+  --color-primary: #040486;
+  --color-primary-hover: #03004f;
+  --color-primary-foreground: #ffffff;
+  --color-accent: #0051d0;
+  --color-destructive: #dc2626;
+  --color-success: #059e1e;
+  --color-warning: #b98a00;
+  --color-warning-bg: #f4b800;
+  --color-tecfood: #0051d0;
+  --color-retail: #059e1e;
+  --font-sans: var(--font-roboto), system-ui, sans-serif;
+  --font-display: var(--font-poppins), var(--font-roboto), sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+}
+
+/* Barra de progresso indeterminada (leitura do contrato em PDF). A faixa
+   atravessa a trilha porque não há progresso real para medir. */
+@keyframes carregando {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
 }

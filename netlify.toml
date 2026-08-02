@@ -1,0 +1,15 @@
+# Configuração do deploy no Netlify.
+# O runtime do Next (plugin oficial) roda as Server Actions e as rotas como
+# funções serverless. O build gera o Prisma Client, sincroniza o schema com o
+# Postgres (DATABASE_URL) e roda o seed (idempotente) antes do next build.
+[build]
+  command = "npm run netlify:build"
+  publish = ".next"
+
+[build.environment]
+  # Sem isso, dependências marcadas como opcionais/dev podem faltar no build.
+  NODE_VERSION = "20"
+
+# Runtime oficial do Next.js no Netlify (App Router, Server Actions, rotas).
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

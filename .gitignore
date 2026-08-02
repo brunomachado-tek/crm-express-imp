@@ -36,6 +36,24 @@ yarn-error.log*
 # vercel
 .vercel
 
+# uploads locais (contratos anexados) — não versionar, contém dados de cliente
+/uploads
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ambiente e segredos
+.env
+.env.*
+!.env.example
+
+# banco local (SQLite, dev)
+/prisma/dev.db
+/prisma/dev.db-journal
+
+# anexos gravados em disco (dev)
+/uploads
+
+# netlify
+.netlify

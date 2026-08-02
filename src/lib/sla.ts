@@ -1,0 +1,81 @@
+import { daysBetween } from "./format";
+import type { Contract, PipelineStage, Project, ProjectPause } from "@prisma/client";
+
+export type SlaInfo = {
+  diasNaEtapa: number; // dias corridos totais na etapa atual
+  diasTeknisa: number; // descontando pausas (pendência do cliente / projeto pausado)
+  idealDays: number | null;
+  atrasado: boolean;
+};
+
+type ProjectWithStage = Pick<Project, "stageEnteredAt"> & {
+  pauses: ProjectPause[];
+  stage: Pick<PipelineStage, "idealDays" | "isFinal">;
+};
+
+export function slaFor(project: ProjectWithStage, now = new Date()): SlaInfo {
+  const entered = new Date(project.stageEnteredAt);
+  const diasNaEtapa = Math.max(0, daysBetween(entered, now));
+
+  // desconta períodos de pausa que intersectam a etapa atual
+  let pausedMs = 0;
+  for (const p of project.pauses) {
+    const start = new Date(Math.max(new Date(p.startedAt).getTime(), entered.getTime()));
+    const end = p.endedAt ? new Date(p.endedAt) : now;
+    if (end > start) pausedMs += end.getTime() - start.getTime();
+  }
+  const diasTeknisa = Math.max(0, diasNaEtapa - Math.floor(pausedMs / (24 * 60 * 60 * 1000)));
+
+  const idealDays = project.stage.idealDays ?? null;
+
+  return {
+    diasNaEtapa,
+    diasTeknisa,
+    idealDays,
+    atrasado: idealDays != null && diasTeknisa > idealDays && !project.stage.isFinal,
+  };
+}
+
+// Marcos contratuais (cláusula SERVIÇO do contrato LUSO)
+export type ContractMilestone = {
+  tipo: "TREINAMENTO_2M";
+  label: string;
+  curto: string; // rótulo enxuto para o card
+  deadline: Date;
+  diasRestantes: number;
+  totalDias: number; // tamanho da janela contratual, para medir o quanto já correu
+  critico: boolean;
+};
+
+// O prazo do treinamento vem da cláusula SERVIÇO do contrato e varia por
+// cliente. Prioriza o contrato LUSO (onde a cláusula vive); se não houver
+// valor, cai no padrão de 60 dias.
+const PRAZO_TREINAMENTO_PADRAO = 60;
+
+export function contractMilestones(
+  project: Pick<Project, "dataContrato" | "status"> & {
+    stage: Pick<PipelineStage, "isFinal">;
+    contracts?: Pick<Contract, "kind" | "prazoTreinamentoDias">[];
+  },
+  now = new Date()
+): ContractMilestone[] {
+  if (!project.dataContrato || project.status !== "ATIVO") return [];
+  if (project.stage.isFinal) return [];
+  const assinatura = new Date(project.dataContrato);
+
+  const luso = project.contracts?.find((c) => c.kind === "LUSO");
+  const doContrato = luso?.prazoTreinamentoDias ?? project.contracts?.[0]?.prazoTreinamentoDias;
+  const JANELA_DIAS = doContrato ?? PRAZO_TREINAMENTO_PADRAO;
+  const t2m = new Date(assinatura.getTime() + JANELA_DIAS * 24 * 60 * 60 * 1000);
+  return [
+    {
+      tipo: "TREINAMENTO_2M",
+      label: `Prazo contratual do treinamento (${JANELA_DIAS} dias da assinatura)`,
+      curto: "Treinamento contratual",
+      deadline: t2m,
+      diasRestantes: daysBetween(now, t2m),
+      totalDias: JANELA_DIAS,
+      critico: daysBetween(now, t2m) < 15,
+    },
+  ];
+}
