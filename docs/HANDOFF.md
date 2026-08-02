@@ -36,9 +36,9 @@ App; todo o resto está como working tree não commitado, sem `git remote`.
    GitHub + Netlify e cola as env vars; (b) Claude aplica a migração
    SQLite→Postgres + anexos-no-banco (deferida de propósito, para testar no 1º
    deploy, já que não há Postgres no ambiente do Claude). Local continua SQLite.
-4. **Pendência de visual (combinada, não feita):** deixar a mini-tendência do
-   card "SLA médio" (aba SLA e Gargalos) no mesmo padrão limpo dos gráficos de
-   barra da aba Vazão (sem o trilho cinza). É a única ponta de UI em aberto.
+4. ~~**Pendência de visual:** mini-tendência do card "SLA médio" no padrão limpo
+   das barras da aba Vazão (sem trilho cinza).~~ **Feito em 2026-08-02** (commit
+   `f75c0a9`, verificado no preview). Não há mais ponta de UI em aberto.
 
 ### Segurança de produção — o que já está pronto (não refazer)
 - Cookie de sessão `secure` em produção.

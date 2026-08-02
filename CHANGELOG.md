@@ -8,6 +8,14 @@ vocabulário honesto: ✅ no ar · 🔨 construído, não entregue · 🌿 só e
 
 ---
 
+## 2026-08-02 — UI: mini-tendência do SLA médio no padrão limpo
+
+- Card "SLA médio de implantação" (aba SLA e Gargalos): a mini-tendência por mês de
+  conclusão perdeu o trilho cinza (`bg-muted` de fundo) e passou a usar o mesmo padrão
+  das barras da aba Vazão, barras sobre uma linha de base. Mantém o destaque do último
+  mês e os stubs de meses sem conclusão. ✅ verificado no preview (build + `tsc` limpos,
+  console sem erros). Fecha a última pendência de UI do handoff.
+
 ## 2026-08-02 — Rede de segurança: primeiro commit real + docs no repo
 
 - **Versionado todo o app** num commit real (`2d9e710`): 85 arquivos, 21.336 linhas.
