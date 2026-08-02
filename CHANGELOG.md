@@ -8,6 +8,20 @@ vocabulário honesto: ✅ no ar · 🔨 construído, não entregue · 🌿 só e
 
 ---
 
+## 2026-08-02 — Rede de segurança: primeiro commit real + docs no repo
+
+- **Versionado todo o app** num commit real (`2d9e710`): 85 arquivos, 21.336 linhas.
+  Antes só existia o scaffold do Create Next App e tudo o mais estava solto na working
+  tree, sem rede de segurança. 🔨 (commit local, ainda **sem `git remote`**).
+- **`docs/` movido para dentro do repo** (`crm-express/docs/`): HANDOFF, DEPLOY e
+  ESPECIFICACAO agora viajam junto para o GitHub quando o remote for criado.
+- Conferido antes de commitar: `.gitignore` segura `.env`, `dev.db`, `uploads` e
+  `node_modules`; nenhum segredo nem arquivo grande entrou. `.claude/launch.json`
+  (config do dev server, sem segredo) foi versionado de propósito.
+- ⏳ **Próximo:** criar GitHub + Neon + Netlify (contas do Bruno) e aplicar a migração
+  SQLite→Postgres, seguindo `docs/DEPLOY.md`. Pendência de UI: mini-tendência do card
+  "SLA médio".
+
 ## 2026-08-01 — Memória de repositório + kit de trabalho
 
 - Criados `ARCHITECTURE.md` (mapa de rotas, modelo Prisma, fluxos, deploy) e este
