@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -177,6 +177,11 @@ model ProjectDocument {
   projectId    String
   project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   filename     String // nome original do arquivo
+  // O arquivo é guardado no próprio banco (bytes), não em disco: o serverless
+  // do Netlify não tem disco que persista entre requisições. Volume é baixo.
+  data         Bytes
+  mimeType     String   @default("application/octet-stream")
+  size         Int      @default(0)
   uploadedById String?
   uploadedBy   User?    @relation(fields: [uploadedById], references: [id])
   uploadedAt   DateTime @default(now())

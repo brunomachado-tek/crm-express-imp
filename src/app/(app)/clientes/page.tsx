@@ -20,9 +20,11 @@ export default async function ClientesPage({
 
   const busca = query
     ? [
-        { razaoSocial: { contains: query } },
-        { propostaNumero: { contains: query } },
-        { cnpj: { contains: query } },
+        // mode "insensitive": no Postgres o contains é sensível a maiúsculas por
+        // padrão; sem isso a busca por "porto" não acharia "Porto".
+        { razaoSocial: { contains: query, mode: "insensitive" as const } },
+        { propostaNumero: { contains: query, mode: "insensitive" as const } },
+        { cnpj: { contains: query, mode: "insensitive" as const } },
       ]
     : undefined;
 

@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
-import fs from "fs/promises";
 import path from "path";
 import { db } from "./db";
 import { createSession, destroySession, requireUser } from "./auth";
@@ -635,17 +634,8 @@ export async function hardDeleteClientAction(formData: FormData) {
   if (!canHardDeleteClient(user)) redirect("/clientes?erro=permissao");
   const clientId = String(formData.get("clientId"));
 
-  // Apaga os arquivos dos anexos antes de o registro sumir, senão viram lixo
-  // órfão no diretório de uploads.
-  const docs = await db.projectDocument.findMany({
-    where: { project: { clientId } },
-    select: { id: true, filename: true },
-  });
-  for (const d of docs) {
-    const ext = path.extname(d.filename).toLowerCase() || ".pdf";
-    await fs.rm(path.join(UPLOAD_DIR, `${d.id}${ext}`), { force: true });
-  }
-
+  // Os anexos são guardados no próprio banco; o cascade os remove junto com o
+  // cliente. Não há mais arquivo em disco para limpar.
   await db.client.delete({ where: { id: clientId } });
 
   revalidatePath("/", "layout");
@@ -690,11 +680,17 @@ export async function applyContractToClient(formData: FormData) {
     client.projects.find((p) => p.productLine === lido.productLine) ?? client.projects[0];
 
   // Anexa o PDF ao projeto sempre, nos dois modos.
-  const doc = await db.projectDocument.create({
-    data: { projectId: projeto.id, filename: pdf.name, uploadedById: user.id },
+  const pdfBytes = Buffer.from(await pdf.arrayBuffer());
+  await db.projectDocument.create({
+    data: {
+      projectId: projeto.id,
+      filename: pdf.name,
+      uploadedById: user.id,
+      data: pdfBytes,
+      mimeType: mimeDoArquivo(pdf.name),
+      size: pdfBytes.length,
+    },
   });
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
-  await fs.writeFile(path.join(UPLOAD_DIR, `${doc.id}.pdf`), Buffer.from(await pdf.arrayBuffer()));
 
   if (modo !== "atualizar") {
     // Só guardar o arquivo, manter o cadastro como está.
@@ -1109,12 +1105,18 @@ export async function createClientProject(formData: FormData) {
 
   // Contrato e plano de projeto ficam anexados ao projeto, onde a implantação
   // procura por eles depois.
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
   const anexar = async (arquivo: File) => {
-    const doc = await db.projectDocument.create({
-      data: { projectId: project.id, filename: arquivo.name, uploadedById: user.id },
+    const bytes = Buffer.from(await arquivo.arrayBuffer());
+    await db.projectDocument.create({
+      data: {
+        projectId: project.id,
+        filename: arquivo.name,
+        uploadedById: user.id,
+        data: bytes,
+        mimeType: mimeDoArquivo(arquivo.name),
+        size: bytes.length,
+      },
     });
-    await fs.writeFile(path.join(UPLOAD_DIR, `${doc.id}.pdf`), Buffer.from(await arquivo.arrayBuffer()));
   };
   if (temPdf) await anexar(pdf);
   if (temPlano) await anexar(pdfPlano);
@@ -1587,13 +1589,24 @@ export async function deleteDelayJustification(formData: FormData) {
 
 // ─── Documentos e anexos do projeto ─────────────────────────────────
 
-const UPLOAD_DIR = path.join(process.cwd(), "uploads", "contracts");
-
 // Só os tipos que o CRM realmente exibe (contrato, aditivo, comprovante,
-// print). A lista fechada impede que o diretório de uploads receba, por
-// exemplo, um .html ou .svg, que o navegador executaria ao abrir o anexo.
+// print). A lista fechada impede que o anexo seja, por exemplo, um .html ou
+// .svg, que o navegador executaria ao abrir.
 const EXTENSOES_ACEITAS = [".pdf", ".png", ".jpg", ".jpeg"];
-const TAMANHO_MAXIMO_MB = 8;
+// Teto conservador: as Server Actions rodam como função serverless no Netlify,
+// cujo limite de payload é ~6 MB. 4 MB deixa margem para o overhead do multipart.
+const TAMANHO_MAXIMO_MB = 4;
+
+const MIME_POR_EXT: Record<string, string> = {
+  ".pdf": "application/pdf",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+};
+
+function mimeDoArquivo(nome: string): string {
+  return MIME_POR_EXT[path.extname(nome).toLowerCase()] ?? "application/octet-stream";
+}
 
 export async function uploadDocument(formData: FormData) {
   const user = await requireUser();
@@ -1615,13 +1628,17 @@ export async function uploadDocument(formData: FormData) {
     redirect(`/projetos/${projectId}?erro=arquivo-tipo`);
   }
 
-  const doc = await db.projectDocument.create({
-    data: { projectId, filename: file.name, uploadedById: user.id },
-  });
-
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
   const bytes = Buffer.from(await file.arrayBuffer());
-  await fs.writeFile(path.join(UPLOAD_DIR, `${doc.id}${ext}`), bytes);
+  await db.projectDocument.create({
+    data: {
+      projectId,
+      filename: file.name,
+      uploadedById: user.id,
+      data: bytes,
+      mimeType: mimeDoArquivo(file.name),
+      size: bytes.length,
+    },
+  });
 
   revalidatePath(`/projetos/${projectId}`);
   revalidatePath(`/clientes/${project.clientId}`); // anexos também aparecem no cliente
@@ -1638,8 +1655,6 @@ export async function deleteDocument(formData: FormData) {
     redirect(`/projetos/${doc.projectId}?erro=permissao`);
   }
 
-  const ext = path.extname(doc.filename).toLowerCase() || ".pdf";
-  await fs.rm(path.join(UPLOAD_DIR, `${doc.id}${ext}`), { force: true });
   await db.projectDocument.delete({ where: { id: documentId } });
 
   revalidatePath(`/projetos/${doc.projectId}`);
