@@ -509,7 +509,7 @@ function SlaMedioCard({
   const comValor = tendencia.filter((t) => t.media != null);
   const maxMedia = Math.max(1, ...comValor.map((t) => t.media as number));
   const ultimoIdx = tendencia.map((t) => t.media != null).lastIndexOf(true);
-  const ALTURA = 88;
+  const ALTURA = 112;
   return (
     <div className="bg-card border border-border border-t-4 border-t-accent rounded-lg p-5">
       <div className="flex items-center justify-between gap-3">
@@ -535,36 +535,42 @@ function SlaMedioCard({
         média de {sla.n} projeto{sla.n === 1 ? "" : "s"} concluído{sla.n === 1 ? "" : "s"}
       </p>
 
-      {/* Mini-tendência: média por mês de conclusão. Último mês em destaque. */}
+      {/* Mini-tendência: média por mês de conclusão. Último mês em destaque.
+          Mesmo padrão limpo das barras da aba Vazão: sobre uma linha de base, sem trilho cinza. */}
       <div className="mt-5">
         <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide mb-3">
           Tendência (média por mês de conclusão)
         </p>
-        <div className="flex items-end gap-2" style={{ height: `${ALTURA + 20}px` }}>
+        <div className="flex items-end justify-between gap-2 border-b border-border" style={{ height: `${ALTURA}px` }}>
           {tendencia.map((t, i) => {
             const destaque = i === ultimoIdx;
-            const h = t.media != null ? Math.max(8, ((t.media as number) / maxMedia) * ALTURA) : 0;
             return (
-              <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1.5">
+              <div key={i} className="flex-1 h-full flex flex-col items-center justify-end">
                 <span className={`text-xs font-semibold h-4 ${destaque ? "text-accent" : "text-muted-foreground"}`}>
                   {t.media ?? ""}
                 </span>
                 <div
-                  className="w-full rounded-t-md bg-muted relative"
-                  style={{ height: `${ALTURA}px` }}
+                  className={`w-full max-w-[36px] rounded-t-md ${
+                    t.media != null ? (destaque ? "bg-accent" : "bg-accent/45") : "bg-muted"
+                  }`}
+                  style={{
+                    height:
+                      t.media != null
+                        ? `${Math.max(10, ((t.media as number) / maxMedia) * (ALTURA - 24))}px`
+                        : "3px",
+                  }}
                   title={t.media != null ? `${t.media}d · ${t.n} concluído(s)` : "sem conclusões"}
-                >
-                  {t.media != null && (
-                    <div
-                      className={`absolute bottom-0 inset-x-0 rounded-t-md ${destaque ? "bg-accent" : "bg-accent/45"}`}
-                      style={{ height: `${h}px` }}
-                    />
-                  )}
-                </div>
-                <span className="text-[11px] text-muted-foreground capitalize">{t.rotulo}</span>
+                />
               </div>
             );
           })}
+        </div>
+        <div className="mt-2 flex justify-between gap-2">
+          {tendencia.map((t, i) => (
+            <span key={i} className="flex-1 text-center text-[11px] text-muted-foreground capitalize">
+              {t.rotulo}
+            </span>
+          ))}
         </div>
         {comValor.length === 0 && (
           <p className="text-xs text-muted-foreground mt-2">Sem conclusões nos últimos meses.</p>
