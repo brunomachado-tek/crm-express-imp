@@ -1775,6 +1775,34 @@ export async function uploadDocument(formData: FormData) {
     },
   });
 
+  // Se o anexo for um Check List de Aceite, puxa os contatos e completa o perfil
+  // do cliente (sem duplicar quem já existe). Best-effort: não bloqueia o upload.
+  if (ext === ".pdf") {
+    try {
+      const { lerChecklistAceite } = await import("./checklist-aceite-pdf");
+      const lido = await lerChecklistAceite(new Uint8Array(bytes));
+      if (lido.ok) {
+        const existentes = await db.contact.findMany({ where: { clientId: project.clientId } });
+        for (const c of lido.contatos) {
+          const dup = existentes.some((e) =>
+            mesmaPessoa({ nome: e.nome, email: e.email, telefone: e.telefone }, c)
+          );
+          if (!dup) {
+            await db.contact.create({
+              data: {
+                clientId: project.clientId,
+                nome: c.nome,
+                email: c.email,
+                telefone: c.telefone,
+                cargo: c.cargo,
+              },
+            });
+          }
+        }
+      }
+    } catch {}
+  }
+
   revalidatePath(`/projetos/${projectId}`);
   revalidatePath(`/clientes/${project.clientId}`); // anexos também aparecem no cliente
 }
