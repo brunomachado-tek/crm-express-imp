@@ -86,15 +86,18 @@ export function StageStepper({
             const anterior = i > 0 ? stages[i - 1] : null;
             const prazoTransicao = anterior?.idealDays ?? null;
             const transicaoAtual = i - 1 === idx; // saindo da etapa atual
+            // Opaco (não translúcido) para a pílula "cortar" o traço em vez de
+            // se sobrepor a ele. A transição atual é preenchida (destaque); as
+            // demais são discretas sobre o fundo do card, só com borda e texto.
             const pillCor = transicaoAtual
               ? estourou
-                ? "bg-destructive text-white"
+                ? "border-transparent bg-destructive text-white"
                 : apertado
-                  ? "bg-warning-bg text-foreground"
-                  : `${accentBg} text-white`
+                  ? "border-transparent bg-warning-bg text-foreground"
+                  : `border-transparent ${accentBg} text-white`
               : i <= idx
-                ? "bg-success/15 text-success"
-                : "bg-muted text-muted-foreground";
+                ? "border-success/30 bg-card text-success"
+                : "border-border bg-card text-muted-foreground";
             return (
               <li key={s.id} className="flex-1 relative flex flex-col items-center">
                 {i > 0 && (
@@ -108,7 +111,7 @@ export function StageStepper({
                 {/* Prazo da transição, centrado no conector, entre as duas etapas. */}
                 {i > 0 && (
                   <span
-                    className={`absolute top-[9px] left-0 -translate-x-1/2 z-20 rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-sm ${pillCor}`}
+                    className={`absolute top-[20px] left-0 -translate-x-1/2 -translate-y-1/2 z-20 rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-none whitespace-nowrap ${pillCor}`}
                     title={
                       prazoTransicao != null
                         ? `${prazoTransicao} dias para ir de "${anterior?.nome}" a "${s.nome}"`
