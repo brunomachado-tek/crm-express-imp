@@ -54,6 +54,12 @@ export function NovoClienteForm({ modules }: { modules: Modulo[] }) {
   const [planoModuleIds, setPlanoModuleIds] = useState<string[]>([]);
   const planoRef = useRef<HTMLInputElement>(null);
 
+  // Check List de Aceite (opcional): dá os contatos do cliente (sponsor,
+  // representante legal, responsável financeiro, primeiro acesso). Lido no
+  // servidor ao cadastrar; aqui só escolhe o arquivo.
+  const [checklistNome, setChecklistNome] = useState<string | null>(null);
+  const checklistRef = useRef<HTMLInputElement>(null);
+
   const solucoes = dados?.contratos.flatMap((c) => c.itens.map((i) => i.solucao)) ?? [];
   const luso = dados?.contratos.find((c) => c.kind === "LUSO") ?? null;
   const pronto = !!dados || manual;
@@ -386,6 +392,61 @@ export function NovoClienteForm({ modules }: { modules: Modulo[] }) {
                   className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5"
                 >
                   <RotateCcw className="h-3.5 w-3.5" /> Trocar o plano
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-card border border-border rounded-lg p-6">
+        <div className="flex gap-4">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent">
+            <ClipboardList className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm font-semibold">
+              Check List de Aceite <span className="text-muted-foreground font-normal">(opcional)</span>
+            </h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Anexe o Check List de Aceite. Dele saem os contatos do cliente (sponsor, representante
+              legal, responsável financeiro, primeiro acesso), que completam o perfil.
+            </p>
+
+            <input
+              ref={checklistRef}
+              type="file"
+              name="checklist"
+              accept="application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) setChecklistNome(f.name);
+              }}
+            />
+
+            {!checklistNome ? (
+              <button
+                type="button"
+                onClick={() => checklistRef.current?.click()}
+                className="mt-4 h-10 px-4 inline-flex items-center gap-2 rounded-md border border-border text-sm font-medium hover:bg-muted transition-colors"
+              >
+                <Upload className="h-4 w-4" /> Escolher o Check List de Aceite
+              </button>
+            ) : (
+              <div className="mt-4 rounded-md border border-success/30 bg-success/5 px-3 py-2.5">
+                <p className="text-sm font-medium text-success inline-flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" /> Anexado: {checklistNome}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setChecklistNome(null);
+                    if (checklistRef.current) checklistRef.current.value = "";
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 mt-2"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" /> Trocar
                 </button>
               </div>
             )}

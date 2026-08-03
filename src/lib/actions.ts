@@ -1201,6 +1201,36 @@ export async function createClientProject(formData: FormData) {
   if (temPdf) await anexar(pdf);
   if (temPlano) await anexar(pdfPlano);
 
+  // Check List de Aceite (opcional): anexa e puxa os contatos, sem duplicar os
+  // que já vieram do plano. Best-effort: não bloqueia o cadastro.
+  const checklist = formData.get("checklist");
+  if (checklist instanceof File && checklist.size > 0) {
+    await anexar(checklist);
+    try {
+      const { lerChecklistAceite } = await import("./checklist-aceite-pdf");
+      const lidoCk = await lerChecklistAceite(new Uint8Array(await checklist.arrayBuffer()));
+      if (lidoCk.ok) {
+        const existentes = await db.contact.findMany({ where: { clientId: client.id } });
+        for (const ct of lidoCk.contatos) {
+          const dup = existentes.some((e) =>
+            mesmaPessoa({ nome: e.nome, email: e.email, telefone: e.telefone }, ct)
+          );
+          if (!dup) {
+            await db.contact.create({
+              data: {
+                clientId: client.id,
+                nome: ct.nome,
+                email: ct.email,
+                telefone: ct.telefone,
+                cargo: ct.cargo,
+              },
+            });
+          }
+        }
+      }
+    } catch {}
+  }
+
   // Cronograma: atividades dos módulos contratados + da moldura fixa.
   await gerarCronogramaProjeto(project.id, productLine, moduleIds);
 
