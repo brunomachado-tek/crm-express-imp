@@ -5,6 +5,7 @@ import { ImportCronogramaButton } from "@/components/project/import-cronograma-b
 import { StatusSelect } from "@/components/project/status-select";
 import { EnvolvidoField } from "@/components/project/envolvido-field";
 import { GrupoField } from "@/components/project/grupo-field";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { NativeDateInput } from "@/components/ui/native-date-input";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { RESPONSAVEL_LABELS, STATUS_LABELS } from "@/lib/format";
@@ -418,9 +419,12 @@ export function ActivityList({
                   </select>
                 </div>
               )}
-              <button className="h-9 px-4 inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-hover transition-colors shrink-0">
+              <SubmitButton
+                pendingLabel="Criando..."
+                className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-hover transition-colors shrink-0"
+              >
                 <Plus className="h-4 w-4" /> Adicionar atividade
-              </button>
+              </SubmitButton>
             </div>
           </div>
         </form>
