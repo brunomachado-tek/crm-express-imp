@@ -70,6 +70,7 @@ const OKS_CLIENTE: Record<string, string> = {
   contato: "Contato salvo.",
   contrato: "Contrato salvo. O marco contratual foi recalculado.",
   cliente: "Dados do cliente salvos.",
+  cadastrado: "Cliente cadastrado. O projeto entrou na primeira etapa do funil.",
   restaurado: "Cliente restaurado.",
   "contrato-atualizado": "Cadastro atualizado a partir do contrato. Veja o registro na timeline do projeto.",
   "contrato-anexado": "Contrato anexado. Os dados foram mantidos.",

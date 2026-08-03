@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { useFormStatus } from "react-dom";
 import { analisarContratoAction, analisarPlanoAction, createClientProject } from "@/lib/actions";
 import type { LeituraContrato } from "@/lib/contrato-pdf";
 import type { LeituraPlano } from "@/lib/plano-pdf";
@@ -711,15 +712,30 @@ export function NovoClienteForm({ modules }: { modules: Modulo[] }) {
           </section>
 
           <div className="flex justify-end gap-3 border-t border-border pt-5">
-            <button
-              type="submit"
-              className="h-10 px-5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary-hover transition-colors"
-            >
-              Cadastrar cliente
-            </button>
+            <SubmitButton />
           </div>
         </div>
       )}
     </form>
+  );
+}
+
+// Estado de carregamento do envio: desabilita o botão e troca o texto enquanto a
+// action roda. Evita o duplo clique (que criava o cliente e depois acusava CNPJ
+// já cadastrado) e mostra que o cadastro está em andamento, que pode demorar
+// alguns segundos por causa da leitura dos PDFs e da gravação dos anexos.
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="h-10 px-5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-2"
+    >
+      {pending && (
+        <span className="h-4 w-4 rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground animate-spin" />
+      )}
+      {pending ? "Cadastrando..." : "Cadastrar cliente"}
+    </button>
   );
 }

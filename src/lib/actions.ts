@@ -1138,7 +1138,7 @@ export async function createClientProject(formData: FormData) {
   });
 
   revalidatePath("/", "layout");
-  redirect(`/clientes/${client.id}`);
+  redirect(`/clientes/${client.id}?ok=cadastrado`);
 }
 
 function numOrNull(v: FormDataEntryValue | null): number | null {
