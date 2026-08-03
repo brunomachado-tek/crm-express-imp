@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { canEditUserRoles, canInviteUsers, canReviewAccessRequests } from "@/lib/permissions";
 import {
   approveAccessRequest,
-  inviteUserAction,
+  createUserAction,
   rejectAccessRequest,
   resendInviteAction,
 } from "@/lib/actions";
@@ -36,10 +36,16 @@ const fieldInput =
 export default async function EquipePage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string; convite?: string; convidado?: string; removido?: string }>;
+  searchParams: Promise<{
+    erro?: string;
+    convite?: string;
+    convidado?: string;
+    removido?: string;
+    criado?: string;
+  }>;
 }) {
   const currentUser = await requireUser();
-  const { erro, convite, convidado, removido } = await searchParams;
+  const { erro, convite, convidado, removido, criado } = await searchParams;
   // Só o fluxo de convite marca `convite=1` ao voltar com erro. Qualquer outro
   // erro (exclusão, papel, liberação de acesso) aparece no topo da página, e
   // não escondido dentro do painel de convite.
@@ -137,10 +143,10 @@ export default async function EquipePage({
             )}
             <p className="text-sm text-muted-foreground mb-4">
               {isDiretoria
-                ? "Crie o acesso e defina o papel. Ao criar, aparece um link de convite para você copiar e mandar direto (WhatsApp, Discord), além da tentativa de envio por email."
-                : `Você convida consultores(as) e CS para o time ${PRODUCT_LABELS[currentUser.productLine!]}. Ao criar, aparece um link para copiar e mandar direto.`}
+                ? "Crie o acesso e defina o papel. A conta nasce ativa com a senha inicial teknisa123; a pessoa entra e troca a senha em Configurações."
+                : `Você adiciona consultores(as) e CS para o time ${PRODUCT_LABELS[currentUser.productLine!]}. A conta nasce ativa com a senha inicial teknisa123; a pessoa troca em Configurações.`}
             </p>
-            <form action={inviteUserAction} className="space-y-4">
+            <form action={createUserAction} className="space-y-4">
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label htmlFor="name" className={fieldLabel}>
@@ -200,7 +206,7 @@ export default async function EquipePage({
                   type="submit"
                   className="h-10 px-5 inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary-hover transition-colors"
                 >
-                  <Link2 className="h-4 w-4" /> Criar convite e gerar link
+                  <UserCheck className="h-4 w-4" /> Criar usuário
                 </button>
               </div>
             </form>
@@ -211,6 +217,12 @@ export default async function EquipePage({
       {!erroDeConvite && erro && (
         <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {ERROS[erro] ?? "Não foi possível concluir a ação."}
+        </div>
+      )}
+      {criado === "1" && (
+        <div className="rounded-md border border-success/30 bg-success/5 px-4 py-3 text-sm text-success">
+          Usuário criado com acesso ativo. Senha inicial: <strong>teknisa123</strong>. Peça para a
+          pessoa trocar em Configurações no primeiro acesso.
         </div>
       )}
       {removido === "1" && (

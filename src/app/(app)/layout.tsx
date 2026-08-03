@@ -15,6 +15,7 @@ import {
   LogOut,
   Plus,
   Workflow,
+  Settings,
 } from "lucide-react";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -30,6 +31,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { href: "/equipe", label: "Equipe", icon: Users },
     ...(user.role === "DIRETORIA" ? [{ href: "/pipeline", label: "Pipeline", icon: Workflow }] : []),
     { href: "/alertas", label: "Alertas", icon: Bell, badge: unread },
+    { href: "/config", label: "Configurações", icon: Settings },
   ];
 
   return (

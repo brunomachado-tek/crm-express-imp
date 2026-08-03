@@ -195,6 +195,60 @@ export async function resetPasswordAction(formData: FormData) {
 // Só diretoria e coordenação convidam (canInviteUsers); coordenação só
 // convida consultor/CS do próprio produto (canAssignRole).
 
+// Diretoria/coordenação cria um usuário direto, com senha inicial teknisa123 e
+// acesso ativo, sem depender de convite. A pessoa entra e troca em Configurações.
+export async function createUserAction(formData: FormData) {
+  const creator = await requireUser();
+  if (!canInviteUsers(creator)) redirect("/equipe?erro=permissao&convite=1");
+
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const role = String(formData.get("role") ?? "") as Role;
+  const productLineRaw = String(formData.get("productLine") ?? "").trim();
+  const productLine = (
+    productLineRaw === "TECFOOD" || productLineRaw === "RETAIL" ? productLineRaw : null
+  ) as ProductLine | null;
+
+  if (!name || !email || !papelValido(role)) redirect("/equipe?erro=campos&convite=1");
+  if (!canAssignRole(creator, role, productLine)) redirect("/equipe?erro=permissao-papel&convite=1");
+  const needsProductLine = role === "COORDENACAO" || role === "CONSULTOR" || role === "CS";
+  if (needsProductLine && !productLine) redirect("/equipe?erro=produto-obrigatorio&convite=1");
+
+  const existing = await db.user.findUnique({ where: { email } });
+  if (existing && !existing.deletedAt) redirect("/equipe?erro=email-existente&convite=1");
+
+  const dados = {
+    name,
+    email,
+    role,
+    productLine: needsProductLine ? productLine : null,
+    passwordHash: bcrypt.hashSync("teknisa123", 10),
+    status: "APROVADO" as const,
+    active: true,
+    deletedAt: null,
+  };
+  if (existing) {
+    await db.user.update({ where: { id: existing.id }, data: dados });
+  } else {
+    await db.user.create({ data: dados });
+  }
+  revalidatePath("/equipe");
+  redirect("/equipe?criado=1");
+}
+
+// Troca a própria senha (em Configurações). Não exige a senha atual: o usuário
+// já está autenticado. Derruba as outras sessões por segurança.
+export async function changeOwnPasswordAction(formData: FormData) {
+  const user = await requireUser();
+  const senha = String(formData.get("password") ?? "");
+  if (senha.length < 8) redirect("/config?erro=senha-curta");
+  await db.user.update({
+    where: { id: user.id },
+    data: { passwordHash: bcrypt.hashSync(senha, 10) },
+  });
+  redirect("/config?ok=1");
+}
+
 export async function inviteUserAction(formData: FormData) {
   const inviter = await requireUser();
   if (!canInviteUsers(inviter)) redirect("/equipe?erro=permissao");

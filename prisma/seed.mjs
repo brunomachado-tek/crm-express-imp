@@ -37,42 +37,23 @@ async function main() {
     }
   }
 
-  // Conta real da diretoria: nasce sem senha (nenhuma senha padrão é gravada
-  // aqui). Ela precisa de convite, e não de "primeiro acesso": desde que o
-  // primeiro acesso passou a exigir liberação de alguém já dentro do sistema,
-  // a primeira conta da diretoria não teria quem a liberasse. O convite é o
-  // que resolve a partida, porque o token já prova a autorização.
-  const diretoria = await prisma.user.upsert({
+  // Conta real da diretoria: sempre nasce (e é mantida) com a senha genérica
+  // `teknisa123`, para o acesso do dono do sistema nunca ficar preso a um
+  // convite. Bruno entra com ela e troca em Configurações. (Temporário: enquanto
+  // há redeploys frequentes, cada deploy reaplica essa senha; remover quando o
+  // sistema estabilizar / migrar para o servidor da Teknisa.)
+  await prisma.user.upsert({
     where: { email: "bruno.machado@teknisa.com" },
-    update: {},
+    update: { passwordHash: hash, status: "APROVADO", active: true },
     create: {
       name: "Bruno Machado",
       email: "bruno.machado@teknisa.com",
       role: "DIRETORIA",
       status: "APROVADO",
-      passwordHash: null,
+      passwordHash: hash,
     },
   });
-
-  if (!diretoria.passwordHash) {
-    const valido = await prisma.inviteToken.findFirst({
-      where: { userId: diretoria.id, usedAt: null, expiresAt: { gt: new Date() } },
-    });
-    const token = valido?.token ?? crypto.randomUUID().replaceAll("-", "") + crypto.randomUUID().replaceAll("-", "");
-    if (!valido) {
-      await prisma.inviteToken.create({
-        data: {
-          token,
-          userId: diretoria.id,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        },
-      });
-    }
-    const base = process.env.APP_URL ?? "http://localhost:3000";
-    console.log(
-      `\nAtive a conta da diretoria (${diretoria.email}) por este link, válido por 7 dias:\n${base}/convite?token=${token}\n`
-    );
-  }
+  console.log("Conta da diretoria (bruno.machado@teknisa.com) com senha inicial: teknisa123");
 
   // ── Categorias de justificativa de atraso (genéricas — ajustar depois) ──
   const delayCategories = [

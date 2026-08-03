@@ -8,6 +8,21 @@ vocabulário honesto: ✅ no ar · 🔨 construído, não entregue · 🌿 só e
 
 ---
 
+## 2026-08-03 — Acesso: senha da diretoria, criar usuário direto, trocar senha
+
+- **Login da diretoria destravado:** o seed passa a garantir a senha inicial
+  `teknisa123` para `bruno.machado@teknisa.com` (a conta antes nascia sem senha e
+  dependia de convite, que falhava). Temporário: cada redeploy reaplica; remover ao
+  estabilizar / migrar para o servidor Teknisa.
+- **Diretor cria usuário direto** (`createUserAction`), sem convite: conta nasce ativa
+  e aprovada com senha inicial `teknisa123`. O painel da equipe passou de "convidar"
+  para "criar usuário".
+- **Configurações** (`/config`): tela para o usuário trocar a própria senha
+  (`changeOwnPasswordAction`), no menu lateral.
+- Lápis de editar atividade ganhou borda igual à da lixeira.
+- Pendente (adiado por limite): remover Pipeline do menu, botão de editar pipeline no
+  funil, e o salvar único do pipeline.
+
 ## 2026-08-03 — Editar campos de atividade já criada
 
 - Cada atividade ganhou **"Editar campos"** (lápis) que abre um painel inline com os

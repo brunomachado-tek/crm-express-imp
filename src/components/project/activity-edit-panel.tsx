@@ -52,7 +52,7 @@ export function ActivityEditPanel({
           onClick={() => setOpen((o) => !o)}
           aria-label="Editar campos"
           title="Editar campos"
-          className={`inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+          className={`h-8 w-8 inline-flex items-center justify-center rounded-md border border-border transition-colors ${
             open ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
           }`}
         >
