@@ -1349,10 +1349,17 @@ export async function addActivity(formData: FormData) {
     respRaw === "TEKNISA" || respRaw === "CLIENTE" ? respRaw : "AMBOS"
   ) as Responsavel;
 
+  // Grupo (fase) escolhido no form: um grupo existente, ou o nome digitado em
+  // "criar novo grupo". Vazio = cai em "Outras atividades".
+  const grupoSel = String(formData.get("grupo") ?? "").trim();
+  const grupoNovo = String(formData.get("novoGrupo") ?? "").trim();
+  const fase = (grupoSel === "__novo__" ? grupoNovo : grupoSel) || null;
+
   await db.projectActivity.create({
     data: {
       projectId,
       titulo,
+      fase,
       descricao: String(formData.get("descricao") ?? "").trim() || null,
       horas: numOrNull(formData.get("horas")),
       dueDate: dataOuNull(formData.get("dueDate")),

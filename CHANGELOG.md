@@ -8,6 +8,13 @@ vocabulário honesto: ✅ no ar · 🔨 construído, não entregue · 🌿 só e
 
 ---
 
+## 2026-08-03 — Nova atividade: escolher/criar grupo
+
+- O form "Criar nova atividade" ganhou o campo **Grupo**: dropdown com os grupos
+  existentes + "＋ Criar novo grupo" (abre campo de texto). Define a `fase` da
+  atividade, que é a chave de agrupamento do cronograma.
+- Criar grupo = escolher "novo grupo" e digitar o nome; o grupo surge ao salvar.
+
 ## 2026-08-03 — Feedback de ação em todo o sistema (toast global)
 
 - **Toast global** (`ActionToast`, montado no layout do app) mostra sucesso/erro de

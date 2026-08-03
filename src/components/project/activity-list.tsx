@@ -4,6 +4,7 @@ import { DeleteActivityButton } from "@/components/project/delete-activity-butto
 import { ImportCronogramaButton } from "@/components/project/import-cronograma-button";
 import { StatusSelect } from "@/components/project/status-select";
 import { EnvolvidoField } from "@/components/project/envolvido-field";
+import { GrupoField } from "@/components/project/grupo-field";
 import { NativeDateInput } from "@/components/ui/native-date-input";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { RESPONSAVEL_LABELS, STATUS_LABELS } from "@/lib/format";
@@ -165,6 +166,8 @@ export function ActivityList({
   const faseAtualIdx = grupos.findIndex((g) =>
     g.items.some((a) => a.status === "PENDENTE" || a.status === "EM_ANDAMENTO")
   );
+  // Grupos que a nova atividade pode reusar (exclui o balde "Outras atividades").
+  const gruposDisponiveis = grupos.map((g) => g.fase).filter((f) => f !== "Outras atividades");
 
   return (
     <section className="bg-card border border-border rounded-lg p-5">
@@ -393,6 +396,7 @@ export function ActivityList({
             </div>
 
             <div className="flex flex-wrap gap-3 items-end">
+              <GrupoField groups={gruposDisponiveis} labelClass={fieldLabel} inputClass={fieldInput} />
               <div className="flex-1 min-w-[220px] space-y-1">
                 <label htmlFor="nova-envolvidos" className={fieldLabel}>
                   Envolvidos do cliente
