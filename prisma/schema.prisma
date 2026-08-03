@@ -7,7 +7,12 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Runtime usa o endpoint POOLED do Neon (host com "-pooler"): no serverless,
+  // reaproveita conexões em vez de abrir uma nova por requisição (o que deixava
+  // tudo lento). O db push do build precisa da conexão DIRETA (DDL não passa
+  // bem pelo pooler), por isso o directUrl separado.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ─── Usuários e acesso ───────────────────────────────────────────────

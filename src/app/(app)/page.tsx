@@ -114,24 +114,28 @@ export default async function DashboardPage({
         }
       : {};
 
-  const projects = await db.project.findMany({
-    where: { deleted: false, isHistorico: false, productLine: produtoSel, ...periodo },
-    include: {
-      client: true,
-      consultant: true,
-      stage: true,
-      pauses: true,
-      contracts: { where: { kind: "LUSO" } },
-      delays: { include: { category: true } },
-    },
-  });
+  // projects e consultores são independentes: buscam em paralelo (uma ida ao
+  // banco em vez de duas). transitions depende dos ids dos projetos, vem depois.
+  const [projects, consultores] = await Promise.all([
+    db.project.findMany({
+      where: { deleted: false, isHistorico: false, productLine: produtoSel, ...periodo },
+      include: {
+        client: true,
+        consultant: true,
+        stage: true,
+        pauses: true,
+        contracts: { where: { kind: "LUSO" } },
+        delays: { include: { category: true } },
+      },
+    }),
+    db.user.findMany({
+      where: { role: "CONSULTOR", active: true, status: "APROVADO", productLine: produtoSel },
+      orderBy: { name: "asc" },
+    }),
+  ]);
   const transitions = await db.stageTransition.findMany({
     where: { projectId: { in: projects.map((p) => p.id) } },
     select: { projectId: true, toStageId: true, at: true },
-  });
-  const consultores = await db.user.findMany({
-    where: { role: "CONSULTOR", active: true, status: "APROVADO", productLine: produtoSel },
-    orderBy: { name: "asc" },
   });
 
   const active = projects.filter((p) => p.status === "ATIVO" && !p.stage.isFinal);
