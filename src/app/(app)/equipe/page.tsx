@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { canEditUserRoles, canInviteUsers, canReviewAccessRequests } from "@/lib/permissions";
 import {
   approveAccessRequest,
+  cancelInviteAction,
   createUserAction,
   rejectAccessRequest,
   resendInviteAction,
@@ -395,12 +396,20 @@ export default async function EquipePage({
                         {fmtDate(u.createdAt)}
                       </p>
                     </div>
-                    <form action={resendInviteAction}>
-                      <input type="hidden" name="userId" value={u.id} />
-                      <button className="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-md border border-border text-xs font-medium hover:bg-muted">
-                        <Send className="h-3.5 w-3.5" /> Reenviar convite
-                      </button>
-                    </form>
+                    <div className="flex items-center gap-2">
+                      <form action={resendInviteAction}>
+                        <input type="hidden" name="userId" value={u.id} />
+                        <button className="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-md border border-border text-xs font-medium hover:bg-muted">
+                          <Send className="h-3.5 w-3.5" /> Reenviar convite
+                        </button>
+                      </form>
+                      <form action={cancelInviteAction}>
+                        <input type="hidden" name="userId" value={u.id} />
+                        <button className="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-md border border-border text-xs font-medium text-muted-foreground hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive transition-colors">
+                          <X className="h-3.5 w-3.5" /> Cancelar
+                        </button>
+                      </form>
+                    </div>
                   </div>
                   {link ? (
                     <div className="flex items-center gap-2 rounded-md bg-muted/50 border border-border px-3 py-1.5">

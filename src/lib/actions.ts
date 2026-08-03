@@ -256,6 +256,23 @@ export async function changeOwnPasswordAction(formData: FormData) {
   redirect("/config?ok=1");
 }
 
+// Cancela um convite pendente (conta ainda sem senha): arquiva a conta e apaga
+// os tokens, liberando o email para um novo "Criar usuário".
+export async function cancelInviteAction(formData: FormData) {
+  const user = await requireUser();
+  if (!canInviteUsers(user)) redirect("/equipe?erro=permissao");
+  const userId = String(formData.get("userId"));
+  const alvo = await db.user.findUnique({ where: { id: userId } });
+  if (!alvo || alvo.passwordHash) redirect("/equipe?erro=nao-encontrado");
+  await db.$transaction([
+    db.inviteToken.deleteMany({ where: { userId } }),
+    db.passwordResetToken.deleteMany({ where: { userId } }),
+    db.user.update({ where: { id: userId }, data: { active: false, deletedAt: new Date() } }),
+  ]);
+  revalidatePath("/equipe");
+  redirect("/equipe?removido=1");
+}
+
 export async function inviteUserAction(formData: FormData) {
   const inviter = await requireUser();
   if (!canInviteUsers(inviter)) redirect("/equipe?erro=permissao");
