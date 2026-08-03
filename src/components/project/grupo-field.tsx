@@ -10,21 +10,21 @@ export function GrupoField({
   groups,
   labelClass,
   inputClass,
+  defaultValue = "",
 }: {
   groups: string[];
   labelClass: string;
   inputClass: string;
+  defaultValue?: string;
 }) {
-  const [sel, setSel] = useState("");
+  const [sel, setSel] = useState(defaultValue);
 
   return (
     <div className="flex-1 min-w-[220px] space-y-1">
-      <label htmlFor="nova-grupo" className={labelClass}>
-        Grupo
-      </label>
+      <span className={labelClass}>Grupo</span>
       <select
-        id="nova-grupo"
         name="grupo"
+        aria-label="Grupo"
         value={sel}
         onChange={(e) => setSel(e.target.value)}
         className={inputClass}

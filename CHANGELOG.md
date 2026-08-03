@@ -8,6 +8,15 @@ vocabulário honesto: ✅ no ar · 🔨 construído, não entregue · 🌿 só e
 
 ---
 
+## 2026-08-03 — Editar campos de atividade já criada
+
+- Cada atividade ganhou **"Editar campos"** (lápis) que abre um painel inline com os
+  mesmos campos da criação (grupo, responsável, horas, entrega, envolvidos, descrição,
+  atribuído), pré-preenchidos, com **Salvar** (botão com estado "Salvando..."). Action
+  `updateActivity`. Status e entrega seguem editáveis direto no card.
+- Agrupamento passou a priorizar a `fase` sobre o módulo, então editar o grupo move a
+  atividade mesmo quando ela veio de um módulo.
+
 ## 2026-08-03 — Nova atividade: escolher/criar grupo
 
 - O form "Criar nova atividade" ganhou o campo **Grupo**: dropdown com os grupos

@@ -5,6 +5,7 @@ import { ImportCronogramaButton } from "@/components/project/import-cronograma-b
 import { StatusSelect } from "@/components/project/status-select";
 import { EnvolvidoField } from "@/components/project/envolvido-field";
 import { GrupoField } from "@/components/project/grupo-field";
+import { ActivityEditPanel } from "@/components/project/activity-edit-panel";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { NativeDateInput } from "@/components/ui/native-date-input";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
@@ -157,7 +158,9 @@ export function ActivityList({
   const grupos: { fase: string; items: Activity[] }[] = [];
   const idxFase = new Map<string, number>();
   for (const a of activities) {
-    const chave = a.template?.moduleTemplate?.nome || a.fase?.trim() || "Outras atividades";
+    // fase explícita tem prioridade (permite mover a atividade de grupo ao
+    // editar); sem fase, usa o módulo de origem; sem nada, cai em "Outras".
+    const chave = a.fase?.trim() || a.template?.moduleTemplate?.nome || "Outras atividades";
     if (!idxFase.has(chave)) {
       idxFase.set(chave, grupos.length);
       grupos.push({ fase: chave, items: [] });
@@ -282,6 +285,7 @@ export function ActivityList({
                 </div>
 
                 {canManage && (
+                  <>
                   <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/70 flex-wrap">
                     <form action={setActivityStatus}>
                       <input type="hidden" name="activityId" value={a.id} />
@@ -301,6 +305,21 @@ export function ActivityList({
                       <DeleteActivityButton activityId={a.id} />
                     </div>
                   </div>
+                  <ActivityEditPanel
+                    activityId={a.id}
+                    titulo={a.titulo}
+                    descricao={a.descricao}
+                    horas={a.horas}
+                    dueDate={a.dueDate ? new Date(a.dueDate).toISOString().slice(0, 10) : null}
+                    responsavel={a.responsavel}
+                    envolvidosCliente={a.envolvidosCliente}
+                    assigneeId={a.assigneeId}
+                    grupoAtual={a.fase?.trim() || a.template?.moduleTemplate?.nome || ""}
+                    groups={gruposDisponiveis}
+                    consultants={consultants}
+                    showAssigneeSelect={showAssigneeSelect}
+                  />
+                  </>
                 )}
               </div>
                   </li>

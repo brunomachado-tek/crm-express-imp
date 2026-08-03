@@ -1372,6 +1372,54 @@ export async function addActivity(formData: FormData) {
   revalidatePath(`/projetos/${projectId}`);
 }
 
+// Edita os campos de uma atividade já criada (mesmos campos da criação). Status
+// e entrega também têm edição direta no card (setActivityStatus/setActivityDue).
+export async function updateActivity(formData: FormData) {
+  const user = await requireUser();
+  const id = String(formData.get("activityId"));
+  const activity = await db.projectActivity.findUniqueOrThrow({
+    where: { id },
+    include: { project: true },
+  });
+  if (!canManageActivities(user, activity.project)) {
+    redirect(`/projetos/${activity.projectId}?erro=permissao`);
+  }
+
+  const titulo = String(formData.get("titulo") ?? "").trim();
+  if (!titulo) redirect(`/projetos/${activity.projectId}?erro=titulo`);
+
+  const respRaw = String(formData.get("responsavel") ?? "AMBOS");
+  const responsavel = (
+    respRaw === "TEKNISA" || respRaw === "CLIENTE" ? respRaw : "AMBOS"
+  ) as Responsavel;
+
+  const grupoSel = String(formData.get("grupo") ?? "").trim();
+  const grupoNovo = String(formData.get("novoGrupo") ?? "").trim();
+  const fase = (grupoSel === "__novo__" ? grupoNovo : grupoSel) || null;
+
+  // O consultor não vê o campo "atribuir a" (só coordenação/diretoria); quando
+  // ausente do form, não mexe no responsável já atribuído.
+  const podeAtribuir = formData.has("assigneeId") && user.role !== "CONSULTOR";
+
+  await db.projectActivity.update({
+    where: { id },
+    data: {
+      titulo,
+      fase,
+      responsavel,
+      descricao: String(formData.get("descricao") ?? "").trim() || null,
+      horas: numOrNull(formData.get("horas")),
+      dueDate: dataOuNull(formData.get("dueDate")),
+      envolvidosCliente: String(formData.get("envolvidosCliente") ?? "").trim() || null,
+      ...(podeAtribuir
+        ? { assigneeId: String(formData.get("assigneeId") ?? "").trim() || null }
+        : {}),
+    },
+  });
+  revalidatePath(`/projetos/${activity.projectId}`);
+  redirect(`/projetos/${activity.projectId}?ok=atividade`);
+}
+
 // Importa o cronograma de uma planilha (Excel) das consultoras: cada linha vira
 // uma atividade, com a data prevista e o status. Não duplica: pula títulos que
 // já existem no projeto (permite reimportar a planilha atualizada).

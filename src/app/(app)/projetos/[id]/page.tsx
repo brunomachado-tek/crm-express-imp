@@ -228,6 +228,11 @@ export default async function ProjetoPage({
           partir da planilha.
         </div>
       )}
+      {ok === "atividade" && (
+        <div className="rounded-md border border-success/30 bg-success/5 px-4 py-3 text-sm text-success">
+          Atividade atualizada.
+        </div>
+      )}
 
       <StageStepper
         projectId={project.id}
