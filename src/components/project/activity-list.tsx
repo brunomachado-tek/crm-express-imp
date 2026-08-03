@@ -1,6 +1,5 @@
 import { Check, ChevronRight, Clock, GanttChartSquare, Lock, Plus, UserRound, Users, Video } from "lucide-react";
 import { addActivity, setActivityDue, setActivityStatus } from "@/lib/actions";
-import { DeleteActivityButton } from "@/components/project/delete-activity-button";
 import { ImportCronogramaButton } from "@/components/project/import-cronograma-button";
 import { StatusSelect } from "@/components/project/status-select";
 import { EnvolvidoField } from "@/components/project/envolvido-field";
@@ -285,7 +284,6 @@ export function ActivityList({
                 </div>
 
                 {canManage && (
-                  <>
                   <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/70 flex-wrap">
                     <form action={setActivityStatus}>
                       <input type="hidden" name="activityId" value={a.id} />
@@ -301,25 +299,21 @@ export function ActivityList({
                         className="h-8 rounded-md border border-border bg-card px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                       />
                     </form>
-                    <div className="ml-auto">
-                      <DeleteActivityButton activityId={a.id} />
-                    </div>
+                    <ActivityEditPanel
+                      activityId={a.id}
+                      titulo={a.titulo}
+                      descricao={a.descricao}
+                      horas={a.horas}
+                      dueDate={a.dueDate ? new Date(a.dueDate).toISOString().slice(0, 10) : null}
+                      responsavel={a.responsavel}
+                      envolvidosCliente={a.envolvidosCliente}
+                      assigneeId={a.assigneeId}
+                      grupoAtual={a.fase?.trim() || a.template?.moduleTemplate?.nome || ""}
+                      groups={gruposDisponiveis}
+                      consultants={consultants}
+                      showAssigneeSelect={showAssigneeSelect}
+                    />
                   </div>
-                  <ActivityEditPanel
-                    activityId={a.id}
-                    titulo={a.titulo}
-                    descricao={a.descricao}
-                    horas={a.horas}
-                    dueDate={a.dueDate ? new Date(a.dueDate).toISOString().slice(0, 10) : null}
-                    responsavel={a.responsavel}
-                    envolvidosCliente={a.envolvidosCliente}
-                    assigneeId={a.assigneeId}
-                    grupoAtual={a.fase?.trim() || a.template?.moduleTemplate?.nome || ""}
-                    groups={gruposDisponiveis}
-                    consultants={consultants}
-                    showAssigneeSelect={showAssigneeSelect}
-                  />
-                  </>
                 )}
               </div>
                   </li>

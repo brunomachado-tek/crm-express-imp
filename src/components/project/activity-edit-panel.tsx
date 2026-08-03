@@ -5,6 +5,7 @@ import { Pencil } from "lucide-react";
 import { updateActivity } from "@/lib/actions";
 import { GrupoField } from "@/components/project/grupo-field";
 import { EnvolvidoField } from "@/components/project/envolvido-field";
+import { DeleteActivityButton } from "@/components/project/delete-activity-button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { Responsavel } from "@prisma/client";
 
@@ -44,17 +45,27 @@ export function ActivityEditPanel({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="mt-3">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <Pencil className="h-3.5 w-3.5" /> {open ? "Cancelar edição" : "Editar campos"}
-      </button>
+    <>
+      <div className="ml-auto flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-label="Editar campos"
+          title="Editar campos"
+          className={`inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+            open ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          }`}
+        >
+          <Pencil className="h-4 w-4" />
+        </button>
+        <DeleteActivityButton activityId={activityId} />
+      </div>
 
       {open && (
-        <form action={updateActivity} className="mt-3 border-t border-border/70 pt-3 space-y-3">
+        <form
+          action={updateActivity}
+          className="basis-full w-full mt-3 border-t border-border/70 pt-3 space-y-3"
+        >
           <input type="hidden" name="activityId" value={activityId} />
 
           <div className="flex flex-wrap gap-3 items-end">
@@ -138,6 +149,6 @@ export function ActivityEditPanel({
           </div>
         </form>
       )}
-    </div>
+    </>
   );
 }
