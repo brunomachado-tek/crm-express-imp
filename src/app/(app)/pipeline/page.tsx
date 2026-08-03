@@ -9,7 +9,6 @@ import {
   deletePipelineStage,
 } from "@/lib/actions";
 import {
-  AlertTriangle,
   ArrowDown,
   ChevronDown,
   ChevronUp,
@@ -48,13 +47,8 @@ function InsertButton({
   );
 }
 
-export default async function PipelinePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ erro?: string }>;
-}) {
+export default async function PipelinePage() {
   const user = await requireUser();
-  const { erro } = await searchParams;
   const canEdit = canEditPipeline(user);
   const stages = await db.pipelineStage.findMany({ orderBy: { ordem: "asc" } });
 
@@ -78,17 +72,6 @@ export default async function PipelinePage({
           chegar à próxima. Vale para os dois funis (TecFood e Retail).
         </p>
       </div>
-
-      {erro === "permissao" && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 shrink-0" /> Seu perfil não pode editar a pipeline.
-        </div>
-      )}
-      {erro === "ultima" && (
-        <div className="rounded-md border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-warning flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 shrink-0" /> A pipeline precisa de pelo menos uma etapa.
-        </div>
-      )}
 
       {!canEdit && (
         <div className="rounded-md border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">

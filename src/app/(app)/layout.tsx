@@ -1,5 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
+import { ActionToast } from "@/components/ui/action-toast";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { logoutAction } from "@/lib/actions";
@@ -32,6 +34,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex-1 flex min-h-screen">
+      <Suspense fallback={null}>
+        <ActionToast />
+      </Suspense>
       <aside className="w-56 shrink-0 border-r border-border bg-card flex flex-col">
         <div className="px-4 py-5 border-b border-border">
           <Link href="/" className="block">

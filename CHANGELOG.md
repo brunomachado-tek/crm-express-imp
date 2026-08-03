@@ -8,6 +8,16 @@ vocabulário honesto: ✅ no ar · 🔨 construído, não entregue · 🌿 só e
 
 ---
 
+## 2026-08-03 — Feedback de ação em todo o sistema (toast global)
+
+- **Toast global** (`ActionToast`, montado no layout do app) mostra sucesso/erro de
+  qualquer ação em qualquer tela, lendo `?ok=`/`?erro=` e limpando o parâmetro da URL.
+  Mensagens centralizadas em `src/lib/feedback.ts`.
+- **Pipeline** agora emite sucesso (salvar prazo/etapa, criar, mover, remover) — era
+  o caso reportado sem retorno. Banner inline antigo do pipeline removido (toast cobre).
+- Telas com retorno próprio mais rico (clientes, projeto, equipe) são ignoradas pelo
+  toast e mantêm seus banners contextuais (ex.: link "abrir cliente já cadastrado").
+
 ## 2026-08-02 — Cronograma agrupado por fase (accordion)
 
 - A lista plana de atividades virou **blocos recolhíveis por módulo** (o bloco do

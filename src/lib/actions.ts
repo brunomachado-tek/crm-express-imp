@@ -2050,7 +2050,7 @@ export async function addPipelineStage(formData: FormData) {
 
   revalidatePath("/pipeline");
   revalidatePath("/", "layout");
-  redirect("/pipeline");
+  redirect("/pipeline?ok=etapa-criada");
 }
 
 // Salva nome, prazo ideal (SLA) e flag de etapa final de uma vez.
@@ -2069,7 +2069,7 @@ export async function savePipelineStage(formData: FormData) {
   });
   revalidatePath("/pipeline");
   revalidatePath("/", "layout");
-  redirect("/pipeline");
+  redirect("/pipeline?ok=etapa");
 }
 
 // Prazo da transição de uma etapa para a próxima: fica no `idealDays` da etapa
@@ -2084,7 +2084,7 @@ export async function savePipelineTransicao(formData: FormData) {
   await db.pipelineStage.update({ where: { id }, data: { idealDays } });
   revalidatePath("/pipeline");
   revalidatePath("/", "layout");
-  redirect("/pipeline");
+  redirect("/pipeline?ok=prazo");
 }
 
 // Reordena uma etapa para a esquerda ou direita, trocando com a vizinha.
@@ -2105,7 +2105,7 @@ export async function movePipelineStage(formData: FormData) {
   ]);
   revalidatePath("/pipeline");
   revalidatePath("/", "layout");
-  redirect("/pipeline");
+  redirect("/pipeline?ok=etapa-movida");
 }
 
 // Apaga uma etapa. Projetos que estiverem nela são movidos para a etapa
@@ -2138,5 +2138,5 @@ export async function deletePipelineStage(formData: FormData) {
 
   revalidatePath("/pipeline");
   revalidatePath("/", "layout");
-  redirect("/pipeline");
+  redirect("/pipeline?ok=etapa-removida");
 }
