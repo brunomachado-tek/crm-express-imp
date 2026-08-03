@@ -9,7 +9,11 @@ import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { RESPONSAVEL_LABELS, STATUS_LABELS } from "@/lib/format";
 import type { ProjectActivity, Responsavel, User } from "@prisma/client";
 
-type Activity = ProjectActivity & { assignee: User | null };
+type Activity = ProjectActivity & {
+  assignee: User | null;
+  // Módulo de origem da atividade (o bloco do cronograma). Vem do template.
+  template?: { moduleTemplate: { nome: string } | null } | null;
+};
 type ConsultantOption = { id: string; name: string };
 
 const STATUS_STYLE: Record<string, string> = {
@@ -151,7 +155,7 @@ export function ActivityList({
   const grupos: { fase: string; items: Activity[] }[] = [];
   const idxFase = new Map<string, number>();
   for (const a of activities) {
-    const chave = a.fase?.trim() || "Outras atividades";
+    const chave = a.template?.moduleTemplate?.nome || a.fase?.trim() || "Outras atividades";
     if (!idxFase.has(chave)) {
       idxFase.set(chave, grupos.length);
       grupos.push({ fase: chave, items: [] });
@@ -191,10 +195,10 @@ export function ActivityList({
             <details
               key={g.fase}
               open={gi === faseAtualIdx}
-              className="group rounded-lg border border-border overflow-hidden"
+              className="group/fase rounded-lg border border-border overflow-hidden"
             >
               <summary className="flex items-center gap-3 cursor-pointer select-none list-none px-4 py-3 bg-muted/40 hover:bg-muted/60 [&::-webkit-details-marker]:hidden">
-                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 transition-transform group-open:rotate-90" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 transition-transform group-open/fase:rotate-90" />
                 <FaseDot items={g.items} />
                 <span className="text-sm font-semibold flex-1 min-w-0">{g.fase}</span>
                 <FaseBadge items={g.items} />

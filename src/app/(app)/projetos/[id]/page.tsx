@@ -76,7 +76,10 @@ export default async function ProjetoPage({
       contracts: { include: { items: true } },
       documents: { orderBy: { uploadedAt: "desc" } },
       modules: { include: { moduleTemplate: true } },
-      activities: { orderBy: { ordem: "asc" }, include: { assignee: true } },
+      activities: {
+        orderBy: { ordem: "asc" },
+        include: { assignee: true, template: { include: { moduleTemplate: { select: { nome: true } } } } },
+      },
       checklist: { orderBy: { ordem: "asc" }, include: { doneBy: true } },
       transitions: { orderBy: { at: "asc" }, include: { byUser: true, fromStage: true, toStage: true } },
       delays: { orderBy: { at: "desc" }, include: { category: true, byUser: true, stage: true } },

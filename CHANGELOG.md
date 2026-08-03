@@ -10,11 +10,14 @@ vocabulário honesto: ✅ no ar · 🔨 construído, não entregue · 🌿 só e
 
 ## 2026-08-02 — Cronograma agrupado por fase (accordion)
 
-- A lista plana de atividades virou **blocos recolhíveis por fase** (as fases do
-  cronograma), com `<details>` nativo. Cabeçalho do bloco mostra progresso
-  (concluídas/total), bolinha de status e ✓ quando completo.
-- **Auto-abertura**: abre sozinha a fase atual (primeira com pendente/em andamento);
-  concluídas e futuras ficam recolhidas. `tsc`+build limpos.
+- A lista plana de atividades virou **blocos recolhíveis por módulo** (o bloco do
+  cronograma), com `<details>` nativo. Cabeçalho mostra progresso (concluídas/total),
+  bolinha de status e ✓ quando completo. Auto-abre a fase atual.
+- Agrupamento: por módulo (via `template.moduleTemplate`); atividades importadas de
+  planilha caem pelo `fase`; manuais em "Outras atividades".
+- Corrigido 2 bugs da 1ª versão: (a) agrupava tudo em "Outras atividades" (o `fase`
+  vinha vazio; o bloco certo é o módulo); (b) o `group` no `<details>` colidia com o
+  `group-hover` do tooltip e abria todos os tooltips (agora `group/fase` nomeado).
 
 ## 2026-08-02 — Cadastro de cliente: feedback de carregamento e sucesso
 
