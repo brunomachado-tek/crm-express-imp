@@ -8,6 +8,19 @@ vocabulário honesto: ✅ no ar · 🔨 construído, não entregue · 🌿 só e
 
 ---
 
+## 2026-08-02 — Cronograma agrupado por fase (accordion)
+
+- A lista plana de atividades virou **blocos recolhíveis por fase** (as fases do
+  cronograma), com `<details>` nativo. Cabeçalho do bloco mostra progresso
+  (concluídas/total), bolinha de status e ✓ quando completo.
+- **Auto-abertura**: abre sozinha a fase atual (primeira com pendente/em andamento);
+  concluídas e futuras ficam recolhidas. `tsc`+build limpos.
+
+## 2026-08-02 — Cadastro de cliente: feedback de carregamento e sucesso
+
+- Botão "Cadastrar cliente" com estado "Cadastrando..." (`useFormStatus`), evita o
+  duplo clique que acusava CNPJ já cadastrado. Sucesso mostra banner na página do cliente.
+
 ## 2026-08-02 — Migração SQLite → Postgres + GitHub
 
 - **Código no GitHub:** repo privado `brunomachado-tek/crm-express-imp`, branch `main`.

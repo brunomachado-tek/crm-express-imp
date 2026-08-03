@@ -1,4 +1,4 @@
-import { Clock, GanttChartSquare, Lock, Plus, UserRound, Users, Video } from "lucide-react";
+import { Check, ChevronRight, Clock, GanttChartSquare, Lock, Plus, UserRound, Users, Video } from "lucide-react";
 import { addActivity, setActivityDue, setActivityStatus } from "@/lib/actions";
 import { DeleteActivityButton } from "@/components/project/delete-activity-button";
 import { ImportCronogramaButton } from "@/components/project/import-cronograma-button";
@@ -145,6 +145,23 @@ export function ActivityList({
   const pct = activities.length === 0 ? 0 : Math.round((done / activities.length) * 100);
   const listaId = `titulos-atividade-${projectId}`;
 
+  // Agrupa por fase (bloco do cronograma), na ordem em que aparecem. Atividades
+  // sem fase caem num bloco final. A fase "atual" (primeira com algo pendente ou
+  // em andamento) abre sozinha; as concluídas e as futuras ficam recolhidas.
+  const grupos: { fase: string; items: Activity[] }[] = [];
+  const idxFase = new Map<string, number>();
+  for (const a of activities) {
+    const chave = a.fase?.trim() || "Outras atividades";
+    if (!idxFase.has(chave)) {
+      idxFase.set(chave, grupos.length);
+      grupos.push({ fase: chave, items: [] });
+    }
+    grupos[idxFase.get(chave)!].items.push(a);
+  }
+  const faseAtualIdx = grupos.findIndex((g) =>
+    g.items.some((a) => a.status === "PENDENTE" || a.status === "EM_ANDAMENTO")
+  );
+
   return (
     <section className="bg-card border border-border rounded-lg p-5">
       <div className="flex items-center justify-between gap-3 mb-1.5">
@@ -169,9 +186,22 @@ export function ActivityList({
           abaixo.
         </p>
       ) : (
-        <ol className="space-y-3">
-          {activities.map((a) => (
-            <li key={a.id} className="flex gap-4">
+        <div className="space-y-3">
+          {grupos.map((g, gi) => (
+            <details
+              key={g.fase}
+              open={gi === faseAtualIdx}
+              className="group rounded-lg border border-border overflow-hidden"
+            >
+              <summary className="flex items-center gap-3 cursor-pointer select-none list-none px-4 py-3 bg-muted/40 hover:bg-muted/60 [&::-webkit-details-marker]:hidden">
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 transition-transform group-open:rotate-90" />
+                <FaseDot items={g.items} />
+                <span className="text-sm font-semibold flex-1 min-w-0">{g.fase}</span>
+                <FaseBadge items={g.items} />
+              </summary>
+              <ol className="space-y-3 p-4 pt-4 border-t border-border">
+                {g.items.map((a) => (
+                  <li key={a.id} className="flex gap-4">
               <DateBlock a={a} />
               <div
                 className={`flex-1 min-w-0 rounded-lg border p-4 ${
@@ -265,9 +295,12 @@ export function ActivityList({
                   </div>
                 )}
               </div>
-            </li>
+                  </li>
+                ))}
+              </ol>
+            </details>
           ))}
-        </ol>
+        </div>
       )}
 
       {canManage ? (
@@ -390,5 +423,29 @@ export function ActivityList({
         </p>
       )}
     </section>
+  );
+}
+
+// Bolinha de status do bloco: verde se tudo concluído, azul se algo em
+// andamento, cinza se só pendente.
+function FaseDot({ items }: { items: Activity[] }) {
+  const done = items.filter((a) => a.status === "CONCLUIDA").length;
+  const tudo = done === items.length;
+  const andamento = items.some((a) => a.status === "EM_ANDAMENTO");
+  const cor = tudo ? "bg-success" : andamento ? "bg-accent" : "bg-muted-foreground/30";
+  return <span className={`h-2 w-2 rounded-full shrink-0 ${cor}`} />;
+}
+
+// Progresso do bloco (concluídas/total) e o check quando tudo está pronto.
+function FaseBadge({ items }: { items: Activity[] }) {
+  const done = items.filter((a) => a.status === "CONCLUIDA").length;
+  const tudo = done === items.length;
+  return (
+    <span className="inline-flex items-center gap-1 shrink-0">
+      {tudo && <Check className="h-3.5 w-3.5 text-success" />}
+      <span className="text-xs font-semibold rounded-full px-2 py-0.5 bg-card text-muted-foreground">
+        {done}/{items.length}
+      </span>
+    </span>
   );
 }
