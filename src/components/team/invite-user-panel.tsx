@@ -19,7 +19,7 @@ export function InviteUserPanel({
         onClick={() => setOpen(true)}
         className="h-10 px-4 inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary-hover transition-colors"
       >
-        <UserPlus className="h-4 w-4" /> Convidar usuário
+        <UserPlus className="h-4 w-4" /> Criar usuário
       </button>
     );
   }
@@ -28,7 +28,7 @@ export function InviteUserPanel({
     <div className="w-full bg-card border border-border rounded-lg p-5">
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm font-semibold inline-flex items-center gap-2">
-          <UserPlus className="h-4 w-4 text-primary" /> Convidar usuário
+          <UserPlus className="h-4 w-4 text-primary" /> Criar usuário
         </p>
         <button
           type="button"

@@ -220,9 +220,15 @@ export default async function EquipePage({
         </div>
       )}
       {criado === "1" && (
-        <div className="rounded-md border border-success/30 bg-success/5 px-4 py-3 text-sm text-success">
-          Usuário criado com acesso ativo. Senha inicial: <strong>teknisa123</strong>. Peça para a
-          pessoa trocar em Configurações no primeiro acesso.
+        <div className="rounded-md border border-success/30 bg-success/5 px-4 py-3 text-sm text-success space-y-1">
+          <p>Usuário criado com acesso ativo. Envie estes dados para a pessoa acessar:</p>
+          <p className="text-foreground">
+            Acesso: <strong>{(process.env.APP_URL ?? "").replace(/\/$/, "")}/login</strong> · Senha
+            inicial: <strong>teknisa123</strong>
+          </p>
+          <p className="text-muted-foreground">
+            No primeiro acesso, peça para trocar a senha em Configurações.
+          </p>
         </div>
       )}
       {removido === "1" && (

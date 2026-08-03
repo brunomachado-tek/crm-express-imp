@@ -215,7 +215,12 @@ export async function createUserAction(formData: FormData) {
   if (needsProductLine && !productLine) redirect("/equipe?erro=produto-obrigatorio&convite=1");
 
   const existing = await db.user.findUnique({ where: { email } });
-  if (existing && !existing.deletedAt) redirect("/equipe?erro=email-existente&convite=1");
+  // Bloqueia só conta ATIVA que já tem senha (usuário real em uso), para não
+  // resetar quem já está usando. Conta pendente (sem senha, do convite antigo)
+  // ou arquivada é reaproveitada e ativada com a senha inicial.
+  if (existing && !existing.deletedAt && existing.passwordHash) {
+    redirect("/equipe?erro=email-existente&convite=1");
+  }
 
   const dados = {
     name,
@@ -229,6 +234,8 @@ export async function createUserAction(formData: FormData) {
   };
   if (existing) {
     await db.user.update({ where: { id: existing.id }, data: dados });
+    // não precisa mais do convite pendente: a conta já nasce acessável
+    await db.inviteToken.deleteMany({ where: { userId: existing.id, usedAt: null } });
   } else {
     await db.user.create({ data: dados });
   }
