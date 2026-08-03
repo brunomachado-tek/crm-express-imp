@@ -20,7 +20,7 @@ const STATUS_STYLE: Record<string, string> = {
   PENDENTE: "bg-muted text-muted-foreground",
   EM_ANDAMENTO: "bg-accent/10 text-accent",
   CONCLUIDA: "bg-success/10 text-success",
-  CANCELADA: "bg-muted text-muted-foreground/60 line-through",
+  CANCELADA: "bg-destructive/10 text-destructive line-through",
 };
 
 const MESES = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
