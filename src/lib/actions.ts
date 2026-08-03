@@ -215,10 +215,12 @@ export async function createUserAction(formData: FormData) {
   if (needsProductLine && !productLine) redirect("/equipe?erro=produto-obrigatorio&convite=1");
 
   const existing = await db.user.findUnique({ where: { email } });
-  // Bloqueia só conta ATIVA que já tem senha (usuário real em uso), para não
-  // resetar quem já está usando. Conta pendente (sem senha, do convite antigo)
-  // ou arquivada é reaproveitada e ativada com a senha inicial.
-  if (existing && !existing.deletedAt && existing.passwordHash) {
+  // "Criar usuário" reprovisiona o acesso: aplica os dados do formulário e a
+  // senha inicial teknisa123, mesmo que o email já exista (resolve contas
+  // antigas de teste que travavam com "já existe"). Não sobrescreve as contas
+  // vivas do Bruno e da Mariana, para não resetá-las por engano.
+  const protegido = ["bruno.machado@teknisa.com", "mariana.pocceschi@teknisa.com"];
+  if (existing && !existing.deletedAt && existing.passwordHash && protegido.includes(email)) {
     redirect("/equipe?erro=email-existente&convite=1");
   }
 
