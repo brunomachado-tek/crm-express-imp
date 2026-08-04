@@ -1547,6 +1547,7 @@ export async function updateActivity(formData: FormData) {
       descricao: String(formData.get("descricao") ?? "").trim() || null,
       horas: numOrNull(formData.get("horas")),
       dueDate: dataOuNull(formData.get("dueDate")),
+      observacao: String(formData.get("observacao") ?? "").trim() || null,
       envolvidosCliente: String(formData.get("envolvidosCliente") ?? "").trim() || null,
       ...(podeAtribuir
         ? { assigneeId: String(formData.get("assigneeId") ?? "").trim() || null }

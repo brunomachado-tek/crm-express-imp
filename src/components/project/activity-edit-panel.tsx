@@ -19,6 +19,7 @@ export function ActivityEditPanel({
   activityId,
   titulo,
   descricao,
+  observacao,
   horas,
   dueDate,
   responsavel,
@@ -32,6 +33,7 @@ export function ActivityEditPanel({
   activityId: string;
   titulo: string;
   descricao: string | null;
+  observacao: string | null;
   horas: number | null;
   dueDate: string | null;
   responsavel: Responsavel;
@@ -128,6 +130,17 @@ export function ActivityEditPanel({
               name="descricao"
               rows={2}
               defaultValue={descricao ?? ""}
+              className={`${fieldInput} h-auto py-2 resize-y`}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <span className={fieldLabel}>Observação</span>
+            <textarea
+              name="observacao"
+              rows={2}
+              defaultValue={observacao ?? ""}
+              placeholder="Nota livre sobre esta atividade (o que combinou, pendências, contexto)."
               className={`${fieldInput} h-auto py-2 resize-y`}
             />
           </div>

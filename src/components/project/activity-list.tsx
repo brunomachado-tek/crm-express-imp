@@ -288,6 +288,12 @@ export function ActivityList({
                   </div>
                 </div>
 
+                {a.observacao && (
+                  <p className="mt-3 text-xs text-muted-foreground bg-muted/40 rounded-md px-3 py-2 whitespace-pre-wrap">
+                    {a.observacao}
+                  </p>
+                )}
+
                 {canManage && (
                   <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/70 flex-wrap">
                     <form action={setActivityStatus}>
@@ -308,6 +314,7 @@ export function ActivityList({
                       activityId={a.id}
                       titulo={a.titulo}
                       descricao={a.descricao}
+                      observacao={a.observacao}
                       horas={a.horas}
                       dueDate={a.dueDate ? new Date(a.dueDate).toISOString().slice(0, 10) : null}
                       responsavel={a.responsavel}

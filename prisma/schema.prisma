@@ -455,6 +455,7 @@ model ProjectActivity {
   template        ActivityTemplate? @relation(fields: [templateId], references: [id])
   titulo          String
   descricao       String?
+  observacao      String? // nota aberta do consultor por atividade (aceita @menção)
   fase            String? // agrupamento livre (ex.: "Cadastros iniciais", "Treinamento")
   horas           Float?
   numReunioes     Int?              @default(0)
