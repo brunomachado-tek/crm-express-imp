@@ -16,6 +16,7 @@ import {
   Plus,
   Workflow,
   Settings,
+  ListChecks,
 } from "lucide-react";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -26,6 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const nav = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/minhas-atividades", label: "Minhas atividades", icon: ListChecks },
     { href: "/funil", label: "Funil", icon: KanbanSquare },
     { href: "/clientes", label: "Clientes", icon: Building2 },
     { href: "/equipe", label: "Equipe", icon: Users },
