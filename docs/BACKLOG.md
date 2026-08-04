@@ -10,6 +10,40 @@
 
 ---
 
+## ✅ Progresso — 2026-08-03
+
+**Onda 1 — CONCLUÍDA:** (1) tag "Cliente + Teknisa"; (2) permissão de edição já
+cobria consultor alocado + coordenação + diretoria; (3) drag-and-drop (alça de 3
+tracinhos) para reordenar atividades; (4) editor de checklist obrigatório por
+etapa no `/pipeline`.
+
+**Onda 2 — CONCLUÍDA:** (5) página "Minhas atividades" (faixas por prioridade +
+blocos por cliente) com badge no menu (atrasadas + esta semana); (6) campo de
+observação por atividade; (7) anexo de fechamento por módulo no cronograma.
+
+**Onda 3 — PARCIAL:** central de notificações já existia (`/alertas`, badge,
+marcar como lido, gatilhos de acesso/novo projeto/realocação). Menção **@nome** na
+observação notifica o mencionado, com **autocomplete** de nomes.
+- 🔴 **PENDENTE — Notificação de "prazo apertado" (infra):** é por tempo, não por
+  evento. Precisa de um **job agendado (cron)**, ex.: Netlify Scheduled Functions,
+  rodando 1x/dia para olhar as atividades vencendo e criar as notificações. Não dá
+  para testar local (precisa do agendador no ar), então fazer num momento dedicado.
+  Hoje o badge de "Minhas atividades" já cobre isso em tempo real na interface.
+
+**Onda 4 — NÃO INICIADA (dependem de decisão do Bruno):**
+- Justificativa descontar do SLA + pausa por viagem do cliente (definir regras +
+  aprovação do coordenador para não burlar).
+- Comissão do consultor (definir o coeficiente/fórmula — bloqueia o build).
+- Gerar PDF de acompanhamento para o cliente (definir conteúdo/layout).
+
+**Outros:** slot do Check List no wizard de cadastro — FEITO. "Salvar único" do
+pipeline — adiado (ver `ROADMAP-100.md` seção 1).
+
+**Deploy:** produção no **imp2** (`crm-express-imp2.netlify.app`, Netlify time pago
+@yapp, repo público). Ponto de retorno estável: tag `provisorio-v1`.
+
+---
+
 ## 🟢 Onda 1 — ganhos rápidos, baixo risco
 1. **Trocar tag "Ambos" → "Cliente + Teknisa"** — só rótulo (`RESPONSAVEL_LABELS`
    + opções do select). ~trivial.
