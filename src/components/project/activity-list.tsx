@@ -386,7 +386,7 @@ export function ActivityList({
                   defaultValue={"AMBOS" satisfies Responsavel}
                   className={fieldInput}
                 >
-                  <option value="AMBOS">Ambos</option>
+                  <option value="AMBOS">Cliente + Teknisa</option>
                   <option value="TEKNISA">Teknisa</option>
                   <option value="CLIENTE">Cliente</option>
                 </select>

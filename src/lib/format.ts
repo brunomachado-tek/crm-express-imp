@@ -25,7 +25,7 @@ export const STATUS_LABELS: Record<string, string> = {
 export const RESPONSAVEL_LABELS: Record<string, string> = {
   TEKNISA: "Teknisa",
   CLIENTE: "Cliente",
-  AMBOS: "Ambos",
+  AMBOS: "Cliente + Teknisa",
 };
 
 export function brl(v: number | null | undefined) {

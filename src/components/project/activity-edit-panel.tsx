@@ -89,7 +89,7 @@ export function ActivityEditPanel({
             <div className="w-40 space-y-1">
               <span className={fieldLabel}>Responsável</span>
               <select name="responsavel" defaultValue={responsavel} className={fieldInput}>
-                <option value="AMBOS">Ambos</option>
+                <option value="AMBOS">Cliente + Teknisa</option>
                 <option value="TEKNISA">Teknisa</option>
                 <option value="CLIENTE">Cliente</option>
               </select>
