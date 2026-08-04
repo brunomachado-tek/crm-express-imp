@@ -143,6 +143,7 @@ export function ActivityList({
   showAssigneeSelect,
   sugestoesTitulo = [],
   documents = [],
+  equipe = [],
 }: {
   projectId: string;
   activities: Activity[];
@@ -151,6 +152,7 @@ export function ActivityList({
   showAssigneeSelect: boolean;
   sugestoesTitulo?: string[];
   documents?: { id: string; filename: string; fase: string | null }[];
+  equipe?: { id: string; name: string }[];
 }) {
   const done = activities.filter((a) => a.status === "CONCLUIDA").length;
   const pct = activities.length === 0 ? 0 : Math.round((done / activities.length) * 100);
@@ -327,6 +329,7 @@ export function ActivityList({
                       grupoAtual={a.fase?.trim() || a.template?.moduleTemplate?.nome || ""}
                       groups={gruposDisponiveis}
                       consultants={consultants}
+                      mentionUsers={equipe}
                       showAssigneeSelect={showAssigneeSelect}
                     />
                   </div>

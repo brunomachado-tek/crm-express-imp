@@ -97,6 +97,12 @@ export default async function ProjetoPage({
     where: { role: "CONSULTOR", active: true, status: "APROVADO", productLine: project.productLine },
     orderBy: { name: "asc" },
   });
+  // Time inteiro (para o autocomplete de @menção na observação).
+  const equipe = await db.user.findMany({
+    where: { active: true, status: "APROVADO" },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
   const delayCategories = await db.delayCategory.findMany({ where: { active: true } });
   // Modelos de atividade do produto, para o consultor não digitar do zero.
   const modelosAtividade = await db.activityTemplate.findMany({
@@ -284,6 +290,7 @@ export default async function ProjetoPage({
         showAssigneeSelect={showAssigneeSelect}
         sugestoesTitulo={titulosUnicos}
         documents={project.documents.map((d) => ({ id: d.id, filename: d.filename, fase: d.fase }))}
+        equipe={equipe}
       />
 
       {/* Timeline em largura total: o texto usa a largura e a autoria fica à direita */}

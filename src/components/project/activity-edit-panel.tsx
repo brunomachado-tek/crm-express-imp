@@ -7,6 +7,7 @@ import { GrupoField } from "@/components/project/grupo-field";
 import { EnvolvidoField } from "@/components/project/envolvido-field";
 import { DeleteActivityButton } from "@/components/project/delete-activity-button";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { MentionTextarea } from "@/components/project/mention-textarea";
 import type { Responsavel } from "@prisma/client";
 
 const fieldLabel = "text-xs font-medium text-muted-foreground";
@@ -28,6 +29,7 @@ export function ActivityEditPanel({
   grupoAtual,
   groups,
   consultants,
+  mentionUsers,
   showAssigneeSelect,
 }: {
   activityId: string;
@@ -42,6 +44,7 @@ export function ActivityEditPanel({
   grupoAtual: string;
   groups: string[];
   consultants: { id: string; name: string }[];
+  mentionUsers: { id: string; name: string }[];
   showAssigneeSelect: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -136,12 +139,12 @@ export function ActivityEditPanel({
 
           <div className="space-y-1">
             <span className={fieldLabel}>Observação</span>
-            <textarea
+            <MentionTextarea
               name="observacao"
-              rows={2}
               defaultValue={observacao ?? ""}
               placeholder="Nota livre. Use @nome para mencionar alguém do time — a pessoa é notificada."
-              className={`${fieldInput} h-auto py-2 resize-y`}
+              className={`${fieldInput} h-auto py-2 resize-y min-h-[3.5rem]`}
+              users={mentionUsers}
             />
           </div>
 
