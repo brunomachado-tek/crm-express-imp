@@ -1482,6 +1482,33 @@ export async function addActivity(formData: FormData) {
   revalidatePath(`/projetos/${projectId}`);
 }
 
+// Reordena atividades dentro de um grupo (drag and drop). Recebe os ids na nova
+// ordem e reatribui `ordem` no intervalo que o grupo já ocupava (preserva a
+// posição do grupo em relação aos outros).
+export async function reorderActivities(formData: FormData) {
+  const user = await requireUser();
+  const projectId = String(formData.get("projectId"));
+  const project = await db.project.findUniqueOrThrow({ where: { id: projectId } });
+  if (!canManageActivities(user, project)) redirect(`/projetos/${projectId}?erro=permissao`);
+
+  const ids = String(formData.get("ordem") ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (ids.length === 0) return;
+
+  const atuais = await db.projectActivity.findMany({
+    where: { id: { in: ids }, projectId },
+    select: { id: true, ordem: true },
+  });
+  if (atuais.length === 0) return;
+  const base = Math.min(...atuais.map((a) => a.ordem));
+  await db.$transaction(
+    ids.map((id, i) => db.projectActivity.update({ where: { id }, data: { ordem: base + i } }))
+  );
+  revalidatePath(`/projetos/${projectId}`);
+}
+
 // Edita os campos de uma atividade já criada (mesmos campos da criação). Status
 // e entrega também têm edição direta no card (setActivityStatus/setActivityDue).
 export async function updateActivity(formData: FormData) {
