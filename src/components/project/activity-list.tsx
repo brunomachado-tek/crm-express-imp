@@ -1,5 +1,7 @@
 import { Check, ChevronRight, Clock, GanttChartSquare, Lock, Plus, UserRound, Users, Video } from "lucide-react";
-import { addActivity, setActivityDue, setActivityStatus } from "@/lib/actions";
+import { addActivity, setActivityDue, setActivityStatus, uploadDocument } from "@/lib/actions";
+import { FileUploadField } from "@/components/project/file-upload-field";
+import { DeleteDocumentButton } from "@/components/project/delete-document-button";
 import { ImportCronogramaButton } from "@/components/project/import-cronograma-button";
 import { StatusSelect } from "@/components/project/status-select";
 import { EnvolvidoField } from "@/components/project/envolvido-field";
@@ -140,6 +142,7 @@ export function ActivityList({
   consultants,
   showAssigneeSelect,
   sugestoesTitulo = [],
+  documents = [],
 }: {
   projectId: string;
   activities: Activity[];
@@ -147,6 +150,7 @@ export function ActivityList({
   consultants: ConsultantOption[];
   showAssigneeSelect: boolean;
   sugestoesTitulo?: string[];
+  documents?: { id: string; filename: string; fase: string | null }[];
 }) {
   const done = activities.filter((a) => a.status === "CONCLUIDA").length;
   const pct = activities.length === 0 ? 0 : Math.round((done / activities.length) * 100);
@@ -332,6 +336,40 @@ export function ActivityList({
                   ),
                 }))}
               />
+
+              <div className="border-t border-border px-4 py-3 space-y-2 bg-muted/20">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Documento de fechamento do módulo
+                </p>
+                {documents.filter((d) => d.fase === g.fase).length > 0 ? (
+                  <ul className="space-y-1">
+                    {documents
+                      .filter((d) => d.fase === g.fase)
+                      .map((d) => (
+                        <li key={d.id} className="flex items-center gap-2 text-sm">
+                          <a
+                            href={`/api/documentos/${d.id}`}
+                            target="_blank"
+                            rel="noopener"
+                            className="flex-1 min-w-0 truncate text-accent hover:underline"
+                          >
+                            {d.filename}
+                          </a>
+                          {canManage && <DeleteDocumentButton documentId={d.id} />}
+                        </li>
+                      ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Nenhum documento de fechamento ainda.</p>
+                )}
+                {canManage && (
+                  <form action={uploadDocument}>
+                    <input type="hidden" name="projectId" value={projectId} />
+                    <input type="hidden" name="fase" value={g.fase} />
+                    <FileUploadField label="Anexar documento de fechamento" />
+                  </form>
+                )}
+              </div>
             </details>
           ))}
         </div>

@@ -1826,6 +1826,7 @@ export async function uploadDocument(formData: FormData) {
     data: {
       projectId,
       filename: file.name,
+      fase: String(formData.get("fase") ?? "").trim() || null,
       uploadedById: user.id,
       data: bytes,
       mimeType: mimeDoArquivo(file.name),

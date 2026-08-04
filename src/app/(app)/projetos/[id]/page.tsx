@@ -283,6 +283,7 @@ export default async function ProjetoPage({
         consultants={consultants}
         showAssigneeSelect={showAssigneeSelect}
         sugestoesTitulo={titulosUnicos}
+        documents={project.documents.map((d) => ({ id: d.id, filename: d.filename, fase: d.fase }))}
       />
 
       {/* Timeline em largura total: o texto usa a largura e a autoria fica à direita */}
