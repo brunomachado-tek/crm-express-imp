@@ -112,6 +112,21 @@ export async function lerChecklistAceite(bytes: Uint8Array): Promise<LeituraChec
     },
   ];
 
-  const contatos = brutos.filter((b): b is ContatoChecklist => !!b && b.nome.length > 1);
+  const validos = brutos.filter((b): b is ContatoChecklist => !!b && b.nome.length > 1);
+
+  // Mesma pessoa em papéis diferentes (ex.: Sponsor e Primeiro acesso) vira um
+  // contato só, juntando os cargos e preenchendo email/telefone que faltarem.
+  const contatos: ContatoChecklist[] = [];
+  for (const c of validos) {
+    const chave = c.nome.trim().toLowerCase();
+    const existe = contatos.find((m) => m.nome.trim().toLowerCase() === chave);
+    if (existe) {
+      if (!existe.cargo.split(" / ").includes(c.cargo)) existe.cargo += ` / ${c.cargo}`;
+      existe.email = existe.email ?? c.email;
+      existe.telefone = existe.telefone ?? c.telefone;
+    } else {
+      contatos.push({ ...c });
+    }
+  }
   return { ok: contatos.length > 0, contatos };
 }
