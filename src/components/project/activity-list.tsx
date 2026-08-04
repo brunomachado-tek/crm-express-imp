@@ -5,6 +5,7 @@ import { StatusSelect } from "@/components/project/status-select";
 import { EnvolvidoField } from "@/components/project/envolvido-field";
 import { GrupoField } from "@/components/project/grupo-field";
 import { ActivityEditPanel } from "@/components/project/activity-edit-panel";
+import { SortableActivities } from "@/components/project/sortable-activities";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { NativeDateInput } from "@/components/ui/native-date-input";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
@@ -209,9 +210,13 @@ export function ActivityList({
                 <span className="text-sm font-semibold flex-1 min-w-0">{g.fase}</span>
                 <FaseBadge items={g.items} />
               </summary>
-              <ol className="space-y-3 p-4 pt-4 border-t border-border">
-                {g.items.map((a) => (
-                  <li key={a.id} className="flex gap-4">
+              <SortableActivities
+                projectId={projectId}
+                canManage={canManage}
+                items={g.items.map((a) => ({
+                  id: a.id,
+                  node: (
+                    <>
               <DateBlock a={a} />
               <div
                 className={`flex-1 min-w-0 rounded-lg border p-4 ${
@@ -316,9 +321,10 @@ export function ActivityList({
                   </div>
                 )}
               </div>
-                  </li>
-                ))}
-              </ol>
+                    </>
+                  ),
+                }))}
+              />
             </details>
           ))}
         </div>
