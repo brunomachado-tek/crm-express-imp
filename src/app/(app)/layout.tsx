@@ -19,15 +19,43 @@ import {
   ListChecks,
 } from "lucide-react";
 
+// Limite superior (exclusivo) da semana atual = próxima segunda 00:00 UTC. Fica
+// fora do componente para não cair no lint de pureza (new Date no render).
+function limiteDaSemana(): Date {
+  const now = new Date();
+  const hoje = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const dow = new Date(hoje).getUTCDay(); // 0=dom..6=sáb
+  return new Date(hoje + (((7 - dow) % 7) + 1) * 24 * 60 * 60 * 1000);
+}
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  const unread = await db.notification.count({
-    where: { readAt: null, OR: [{ userId: null }, { userId: user.id }] },
-  });
+
+  // Escopo das atividades do usuário (mesmo de "Minhas atividades").
+  const escopo =
+    user.role === "CONSULTOR"
+      ? { consultantId: user.id }
+      : user.role === "DIRETORIA"
+        ? {}
+        : { productLine: user.productLine ?? undefined };
+
+  const [unread, semana] = await Promise.all([
+    db.notification.count({
+      where: { readAt: null, OR: [{ userId: null }, { userId: user.id }] },
+    }),
+    // atividades pendentes com prazo até o fim desta semana (inclui atrasadas)
+    db.projectActivity.count({
+      where: {
+        status: { in: ["PENDENTE", "EM_ANDAMENTO"] },
+        dueDate: { lt: limiteDaSemana() },
+        project: { deleted: false, status: "ATIVO", ...escopo },
+      },
+    }),
+  ]);
 
   const nav = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/minhas-atividades", label: "Minhas atividades", icon: ListChecks },
+    { href: "/minhas-atividades", label: "Minhas atividades", icon: ListChecks, badge: semana },
     { href: "/funil", label: "Funil", icon: KanbanSquare },
     { href: "/clientes", label: "Clientes", icon: Building2 },
     { href: "/equipe", label: "Equipe", icon: Users },
