@@ -17,6 +17,8 @@ export const OK_MESSAGES: Record<string, string> = {
   "etapa-criada": "Etapa criada.",
   "etapa-removida": "Etapa removida.",
   "etapa-movida": "Etapas reordenadas.",
+  "checklist-add": "Item de checklist adicionado.",
+  "checklist-del": "Item de checklist removido.",
 };
 
 export const ERRO_MESSAGES: Record<string, string> = {

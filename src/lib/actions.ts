@@ -2219,6 +2219,33 @@ export async function submitIntake(formData: FormData) {
 // dois funis. Toda action confere canEditPipeline no servidor.
 
 // Cria uma etapa ao lado de outra (à esquerda ou à direita) ou no fim.
+// Itens do checklist obrigatório de uma etapa (StageChecklistTemplate). Ao
+// entrar na etapa, cada item vira um ProjectChecklistItem (instantiateChecklist).
+export async function addChecklistTemplate(formData: FormData) {
+  const user = await requireUser();
+  if (!canEditPipeline(user)) redirect("/pipeline?erro=permissao");
+  const stageId = String(formData.get("stageId"));
+  const titulo = String(formData.get("titulo") ?? "").trim();
+  if (!titulo) redirect("/pipeline?erro=titulo");
+  const last = await db.stageChecklistTemplate.findFirst({
+    where: { stageId },
+    orderBy: { ordem: "desc" },
+  });
+  await db.stageChecklistTemplate.create({
+    data: { stageId, titulo, ordem: (last?.ordem ?? -1) + 1 },
+  });
+  revalidatePath("/pipeline");
+  redirect("/pipeline?ok=checklist-add");
+}
+
+export async function removeChecklistTemplate(formData: FormData) {
+  const user = await requireUser();
+  if (!canEditPipeline(user)) redirect("/pipeline?erro=permissao");
+  await db.stageChecklistTemplate.delete({ where: { id: String(formData.get("id")) } });
+  revalidatePath("/pipeline");
+  redirect("/pipeline?ok=checklist-del");
+}
+
 export async function addPipelineStage(formData: FormData) {
   const user = await requireUser();
   if (!canEditPipeline(user)) redirect("/pipeline?erro=permissao");

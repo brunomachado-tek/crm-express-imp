@@ -7,6 +7,8 @@ import {
   savePipelineTransicao,
   movePipelineStage,
   deletePipelineStage,
+  addChecklistTemplate,
+  removeChecklistTemplate,
 } from "@/lib/actions";
 import {
   ArrowDown,
@@ -59,6 +61,18 @@ export default async function PipelinePage() {
     _count: { _all: true },
   });
   const countByStage = new Map(counts.map((c) => [c.stageId, c._count._all]));
+
+  // Itens de checklist por etapa (o padrão obrigatório instanciado ao entrar nela)
+  const tpls = await db.stageChecklistTemplate.findMany({
+    where: { active: true },
+    orderBy: { ordem: "asc" },
+  });
+  const tplByStage = new Map<string, typeof tpls>();
+  for (const t of tpls) {
+    const arr = tplByStage.get(t.stageId) ?? [];
+    arr.push(t);
+    tplByStage.set(t.stageId, arr);
+  }
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -168,6 +182,47 @@ export default async function PipelinePage() {
                   </form>
                 ) : (
                   <p className="text-sm font-medium">{s.nome}</p>
+                )}
+
+                {canEdit && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <p className={`${fieldLabel} mb-2`}>Checklist obrigatório desta etapa</p>
+                    <ul className="space-y-1.5 mb-2">
+                      {(tplByStage.get(s.id) ?? []).map((t) => (
+                        <li key={t.id} className="flex items-center gap-2 text-sm">
+                          <span className="flex-1">{t.titulo}</span>
+                          <form action={removeChecklistTemplate}>
+                            <input type="hidden" name="id" value={t.id} />
+                            <button
+                              type="submit"
+                              title="Remover item"
+                              className="h-7 w-7 inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/5"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </form>
+                        </li>
+                      ))}
+                      {(tplByStage.get(s.id) ?? []).length === 0 && (
+                        <li className="text-xs text-muted-foreground">Nenhum item ainda.</li>
+                      )}
+                    </ul>
+                    <form action={addChecklistTemplate} className="flex items-center gap-2">
+                      <input type="hidden" name="stageId" value={s.id} />
+                      <input
+                        name="titulo"
+                        placeholder="Novo item do checklist"
+                        className={`${fieldInput} flex-1`}
+                      />
+                      <button
+                        type="submit"
+                        title="Adicionar item"
+                        className="h-9 px-3 inline-flex items-center gap-1.5 rounded-md border border-border text-sm font-medium hover:bg-muted"
+                      >
+                        <Plus className="h-4 w-4" /> Item
+                      </button>
+                    </form>
+                  </div>
                 )}
               </div>
 
