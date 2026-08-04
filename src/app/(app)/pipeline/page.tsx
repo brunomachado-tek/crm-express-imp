@@ -10,6 +10,7 @@ import {
   addChecklistTemplate,
   removeChecklistTemplate,
 } from "@/lib/actions";
+import { SubmitButton } from "@/components/ui/submit-button";
 import {
   ArrowDown,
   ChevronDown,
@@ -214,13 +215,12 @@ export default async function PipelinePage() {
                         placeholder="Novo item do checklist"
                         className={`${fieldInput} flex-1`}
                       />
-                      <button
-                        type="submit"
-                        title="Adicionar item"
-                        className="h-9 px-3 inline-flex items-center gap-1.5 rounded-md border border-border text-sm font-medium hover:bg-muted"
+                      <SubmitButton
+                        pendingLabel="Adicionando..."
+                        className="h-9 px-3 rounded-md border border-border text-sm font-medium hover:bg-muted"
                       >
                         <Plus className="h-4 w-4" /> Item
-                      </button>
+                      </SubmitButton>
                     </form>
                   </div>
                 )}
