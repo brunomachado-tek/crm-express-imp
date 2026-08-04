@@ -1509,6 +1509,44 @@ export async function reorderActivities(formData: FormData) {
   revalidatePath(`/projetos/${projectId}`);
 }
 
+// Notifica usuários mencionados com @nome num texto (observação, comentário).
+// Casa pelo primeiro nome (sem acento, sem caixa). Não notifica o próprio autor.
+async function notificarMencoes(
+  texto: string,
+  autor: { id: string; name: string },
+  projectId: string | null
+) {
+  const norm = (s: string) =>
+    s
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .toLowerCase();
+  const tokens = [...new Set((texto.match(/@([\p{L}]+)/gu) ?? []).map((t) => norm(t.slice(1))))];
+  if (tokens.length === 0) return;
+
+  const users = await db.user.findMany({
+    where: { active: true, status: "APROVADO" },
+    select: { id: true, name: true },
+  });
+  const alvos = new Set<string>();
+  for (const t of tokens) {
+    for (const u of users) {
+      if (norm(u.name.split(" ")[0]) === t && u.id !== autor.id) alvos.add(u.id);
+    }
+  }
+  for (const uid of alvos) {
+    await db.notification.create({
+      data: {
+        userId: uid,
+        projectId,
+        tipo: "MENCAO",
+        titulo: `${autor.name} mencionou você`,
+        corpo: texto.length > 160 ? texto.slice(0, 157) + "..." : texto,
+      },
+    });
+  }
+}
+
 // Edita os campos de uma atividade já criada (mesmos campos da criação). Status
 // e entrega também têm edição direta no card (setActivityStatus/setActivityDue).
 export async function updateActivity(formData: FormData) {
@@ -1537,6 +1575,7 @@ export async function updateActivity(formData: FormData) {
   // O consultor não vê o campo "atribuir a" (só coordenação/diretoria); quando
   // ausente do form, não mexe no responsável já atribuído.
   const podeAtribuir = formData.has("assigneeId") && user.role !== "CONSULTOR";
+  const novaObs = String(formData.get("observacao") ?? "").trim() || null;
 
   await db.projectActivity.update({
     where: { id },
@@ -1547,13 +1586,18 @@ export async function updateActivity(formData: FormData) {
       descricao: String(formData.get("descricao") ?? "").trim() || null,
       horas: numOrNull(formData.get("horas")),
       dueDate: dataOuNull(formData.get("dueDate")),
-      observacao: String(formData.get("observacao") ?? "").trim() || null,
+      observacao: novaObs,
       envolvidosCliente: String(formData.get("envolvidosCliente") ?? "").trim() || null,
       ...(podeAtribuir
         ? { assigneeId: String(formData.get("assigneeId") ?? "").trim() || null }
         : {}),
     },
   });
+  // menção @nome na observação notifica os mencionados (só quando a obs muda)
+  if (novaObs && novaObs !== activity.observacao) {
+    await notificarMencoes(novaObs, user, activity.projectId);
+  }
+
   revalidatePath(`/projetos/${activity.projectId}`);
   redirect(`/projetos/${activity.projectId}?ok=atividade`);
 }

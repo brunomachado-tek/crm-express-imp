@@ -140,7 +140,7 @@ export function ActivityEditPanel({
               name="observacao"
               rows={2}
               defaultValue={observacao ?? ""}
-              placeholder="Nota livre sobre esta atividade (o que combinou, pendências, contexto)."
+              placeholder="Nota livre. Use @nome para mencionar alguém do time — a pessoa é notificada."
               className={`${fieldInput} h-auto py-2 resize-y`}
             />
           </div>
