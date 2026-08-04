@@ -1,4 +1,4 @@
-import { Check, ChevronRight, Clock, GanttChartSquare, Lock, Plus, UserRound, Users, Video } from "lucide-react";
+import { Check, ChevronRight, Clock, GanttChartSquare, Lock, Paperclip, Plus, UserRound, Users, Video } from "lucide-react";
 import { addActivity, setActivityDue, setActivityStatus, uploadDocument } from "@/lib/actions";
 import { FileUploadField } from "@/components/project/file-upload-field";
 import { DeleteDocumentButton } from "@/components/project/delete-document-button";
@@ -337,16 +337,22 @@ export function ActivityList({
                 }))}
               />
 
-              <div className="border-t border-border px-4 py-3 space-y-2 bg-muted/20">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="border-t border-border px-4 py-4 bg-accent/[0.04] text-center">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-accent/10 text-accent">
+                  <Paperclip className="h-4 w-4" />
+                </span>
+                <p className="mt-1.5 text-xs font-semibold uppercase tracking-wide text-accent">
                   Documento de fechamento do módulo
                 </p>
                 {documents.filter((d) => d.fase === g.fase).length > 0 ? (
-                  <ul className="space-y-1">
+                  <ul className="mt-3 space-y-1.5 max-w-md mx-auto text-left">
                     {documents
                       .filter((d) => d.fase === g.fase)
                       .map((d) => (
-                        <li key={d.id} className="flex items-center gap-2 text-sm">
+                        <li
+                          key={d.id}
+                          className="flex items-center gap-2 text-sm bg-card border border-border rounded-md px-3 py-1.5"
+                        >
                           <a
                             href={`/api/documentos/${d.id}`}
                             target="_blank"
@@ -360,10 +366,12 @@ export function ActivityList({
                       ))}
                   </ul>
                 ) : (
-                  <p className="text-xs text-muted-foreground">Nenhum documento de fechamento ainda.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Registre aqui o documento que comprova a entrega deste módulo.
+                  </p>
                 )}
                 {canManage && (
-                  <form action={uploadDocument}>
+                  <form action={uploadDocument} className="mt-3 flex justify-center">
                     <input type="hidden" name="projectId" value={projectId} />
                     <input type="hidden" name="fase" value={g.fase} />
                     <FileUploadField label="Anexar documento de fechamento" />
