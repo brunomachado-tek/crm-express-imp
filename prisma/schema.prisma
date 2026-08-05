@@ -544,12 +544,13 @@ model TimelineEntry {
 }
 
 model Notification {
-  id        String    @id @default(cuid())
-  userId    String? // null = broadcast para diretoria/coordenação
-  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  projectId String?
-  project   Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  tipo      String // NOVO_PROJETO | ATRASO_SLA | MARCO_CONTRATUAL | ...
+  id         String    @id @default(cuid())
+  userId     String? // null = broadcast para diretoria/coordenação
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId  String?
+  project    Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  activityId String? // atividade relacionada (usado para deduplicar avisos de prazo)
+  tipo       String // NOVO_PROJETO | ATRASO_SLA | MARCO_CONTRATUAL | MENCAO | PRAZO | ...
   titulo    String
   corpo     String?
   readAt    DateTime?

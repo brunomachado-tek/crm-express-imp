@@ -1531,7 +1531,8 @@ async function notificarMencoes(
   const alvos = new Set<string>();
   for (const t of tokens) {
     for (const u of users) {
-      if (norm(u.name.split(" ")[0]) === t && u.id !== autor.id) alvos.add(u.id);
+      // notifica todo mencionado, inclusive o próprio autor (auto-lembrete)
+      if (norm(u.name.split(" ")[0]) === t) alvos.add(u.id);
     }
   }
   for (const uid of alvos) {
