@@ -31,7 +31,6 @@ import {
   CalendarDays,
   History,
   Package,
-  FileText,
   Pause,
   Play,
   Send,
@@ -198,15 +197,8 @@ export default async function ProjetoPage({
               </span>
             </div>
           </div>
-          {(
+          {(canPauseResume || canCancel) && (
             <div className="flex items-center gap-2 shrink-0">
-              <Link
-                href={`/acompanhamento/${project.id}`}
-                target="_blank"
-                className="h-9 px-3 inline-flex items-center gap-1.5 rounded-md border border-border text-sm hover:bg-muted"
-              >
-                <FileText className="h-4 w-4" /> PDF de acompanhamento
-              </Link>
               {canPauseResume && project.status === "ATIVO" && (
                 <form action={pauseProject}>
                   <input type="hidden" name="projectId" value={project.id} />

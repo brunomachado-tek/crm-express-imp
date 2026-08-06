@@ -19,6 +19,9 @@ vocabulário honesto: ✅ no ar · 🔨 construído, não entregue · 🌿 só e
   carregadas via `next/font`), cores do `@theme`. Motivo de não usar
   `@react-pdf/renderer`: precisaria empacotar os TTF das fontes e redesenhar o logo
   path a path, arriscando o resultado genérico.
+- Botão **"PDF de acompanhamento"** movido do header do projeto para a barra do
+  **Cronograma de atividades**, ao lado de "Importar planilha", com destaque
+  (preenchido no azul primário Teknisa). Abre a página em nova aba.
 - Conteúdo (decisão do Bruno): grupos por fase/módulo com todas as atividades,
   resumo (descrição), responsável pela entrega, envolvidos e data (entregue/previsto
   conforme status). Cabeçalho com cliente, CNPJ, cidade/UF, consultor, etapa,

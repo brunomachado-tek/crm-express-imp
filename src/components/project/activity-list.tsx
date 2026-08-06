@@ -1,4 +1,4 @@
-import { Check, ChevronRight, Clock, GanttChartSquare, Lock, Paperclip, Plus, UserRound, Users, Video } from "lucide-react";
+import { Check, ChevronRight, Clock, FileText, GanttChartSquare, Lock, Paperclip, Plus, UserRound, Users, Video } from "lucide-react";
 import { addActivity, setActivityDue, setActivityStatus, uploadDocument } from "@/lib/actions";
 import { FileUploadField } from "@/components/project/file-upload-field";
 import { DeleteDocumentButton } from "@/components/project/delete-document-button";
@@ -188,6 +188,14 @@ export function ActivityList({
         </h2>
         <div className="flex items-center gap-2">
           {canManage && <ImportCronogramaButton projectId={projectId} />}
+          <a
+            href={`/acompanhamento/${projectId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground text-xs font-semibold shadow-sm hover:bg-primary-hover transition-colors"
+          >
+            <FileText className="h-3.5 w-3.5" /> PDF de acompanhamento
+          </a>
           <span className="text-xs font-semibold rounded-full px-2 py-0.5 bg-muted text-muted-foreground">
             {done}/{activities.length} concluídas
           </span>
