@@ -8,6 +8,26 @@ vocabulário honesto: ✅ no ar · 🔨 construído, não entregue · 🌿 só e
 
 ---
 
+## 2026-08-06 — Trilha de implantação reduzida (upsell de cliente existente)
+
+- **Bifurcação do funil TecFood:** campo `trilha` (`BASE`/`REDUZIDA`) em
+  `PipelineStage` e `Project`. Etapas e projetos são filtrados por trilha no funil,
+  no stepper e na movimentação. Mudança aditiva (tudo que existe fica em `BASE`).
+- **Trilha Reduzida** (seed): as mesmas etapas da Base com a validação comercial
+  colapsada em "Validação comercial CS" (remove a do coordenador). Sem checklist.
+- **Cadastro** ganhou o passo "É cliente Teknisa / Não é cliente". "Não é" segue o
+  fluxo completo (Base). "É cliente" é upsell: só o contrato (esconde plano e Check
+  List de Aceite), cria o cadastro completo (ou reaproveita pelo CNPJ) e cai na
+  trilha Reduzida. O cronograma mantém a moldura fixa (nova Reunião de Abertura).
+- **Permissão:** o CS pode mover etapa na trilha Reduzida (é ele quem valida e
+  conduz o upsell); a movimentação já vira log (`StageTransition`, na timeline). Na
+  Base o CS segue só leitura.
+- **Editor `/pipeline`** ganhou o select Base/Reduzida (CRUD por trilha; sem editor
+  de checklist na Reduzida). **Funil** ganhou a chave Base/Reduzida.
+- Spec: `docs/superpowers/specs/2026-08-06-trilha-implantacao-reduzida-design.md`.
+  Plano: `docs/superpowers/plans/2026-08-06-trilha-implantacao-reduzida.md`.
+- Status: 🔨 tsc + next build limpos. ⏳ verificação funcional pendente (Bruno).
+
 ## 2026-08-06 — Onda 4 item 3: PDF de acompanhamento do cliente (layout Teknisa)
 
 - Nova página `/acompanhamento/[projetoId]`, **fora do grupo `(app)`** (sem barra
