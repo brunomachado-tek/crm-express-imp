@@ -26,6 +26,12 @@ vocabulário honesto: ✅ no ar · 🔨 construído, não entregue · 🌿 só e
   projeto. Gera on demand (sempre atual), 1 por projeto.
 - Status: 🔨 buildado (tsc + next build limpos), verificado o layout num mock fiel
   renderizado. ⏳ verificação na URL viva pendente (Bruno).
+- **Ajuste (mesmo dia, feedback do Bruno):** o documento é do INÍCIO da implantação,
+  então saiu o status/tag de conclusão e o contador de "concluídas". Agora lista
+  TODOS os blocos e atividades, cada uma detalhada com todas as infos do CRM:
+  descrição, pautas, responsável (Teknisa/Cliente/Cliente+Teknisa), envolvidos do
+  cliente, consultor, esforço (horas), nº de reuniões, data prevista e reunião
+  agendada. A observação da atividade fica de fora (nota interna com @menção).
 
 ## 2026-08-06 — Onda 4 item 1: justificativa de atraso com aprovação que desconta do SLA
 

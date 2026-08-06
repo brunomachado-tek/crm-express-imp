@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { fmtDate, PRODUCT_LABELS, STATUS_LABELS } from "@/lib/format";
+import { fmtDate, PRODUCT_LABELS, RESPONSAVEL_LABELS } from "@/lib/format";
 import { PrintButton } from "@/components/acompanhamento/print-button";
 
 export const metadata = {
@@ -12,15 +12,13 @@ export const metadata = {
 // alteração. Fica fora do grupo (app) de propósito, para não herdar a barra
 // lateral e sair limpo na impressão. O usuário gera o PDF pelo "Salvar como PDF"
 // do navegador (o layout de impressão está no @media print do globals.css).
+//
+// É gerado no INÍCIO da implantação: as atividades ainda não estão em execução,
+// então o documento é o plano detalhado (todos os blocos e atividades com todas
+// as informações do CRM), sem status/tags de conclusão. A observação da
+// atividade fica de fora de propósito: é nota interna do consultor (com @menção).
 
 type Params = { projetoId: string };
-
-const STATUS_TOM: Record<string, string> = {
-  PENDENTE: "bg-muted text-muted-foreground",
-  EM_ANDAMENTO: "bg-accent/10 text-accent",
-  CONCLUIDA: "bg-success/10 text-success",
-  CANCELADA: "bg-destructive/10 text-destructive",
-};
 
 export default async function AcompanhamentoPage({ params }: { params: Promise<Params> }) {
   await requireUser();
@@ -62,7 +60,6 @@ export default async function AcompanhamentoPage({ params }: { params: Promise<P
   const acentoBorda = project.productLine === "TECFOOD" ? "border-tecfood" : "border-retail";
   const acentoBg = project.productLine === "TECFOOD" ? "bg-tecfood" : "bg-retail";
   const total = project.activities.length;
-  const concluidas = project.activities.filter((a) => a.status === "CONCLUIDA").length;
 
   const cliente = project.client;
   const local = [cliente.cidade, cliente.uf].filter(Boolean).join(", ");
@@ -113,8 +110,10 @@ export default async function AcompanhamentoPage({ params }: { params: Promise<P
             )}
           </div>
           <div className="mt-4 inline-flex items-center gap-2 rounded-md bg-muted px-3 py-1.5 text-sm">
-            <span className="font-semibold">{concluidas}</span>
-            <span className="text-muted-foreground">de {total} atividades concluídas</span>
+            <span className="font-semibold">{total}</span>
+            <span className="text-muted-foreground">
+              atividades planejadas em {grupos.length} bloco{grupos.length === 1 ? "" : "s"}
+            </span>
           </div>
         </section>
 
@@ -127,45 +126,58 @@ export default async function AcompanhamentoPage({ params }: { params: Promise<P
               </h3>
               <ul className="mt-3 space-y-2.5">
                 {g.items.map((a) => {
-                  const entregou = a.assignee?.name ?? project.consultant?.name ?? null;
-                  const dataEntrega =
-                    a.status === "CONCLUIDA" ? a.completedAt ?? a.dueDate : a.dueDate;
-                  const rotuloData = a.status === "CONCLUIDA" ? "Entregue em" : "Previsto para";
+                  // Todos os campos que a atividade tem no CRM (menos a observação,
+                  // que é nota interna). Só entra no documento o que está preenchido.
+                  const campos: { rotulo: string; valor: string }[] = [
+                    { rotulo: "Responsável", valor: RESPONSAVEL_LABELS[a.responsavel] },
+                    ...(a.envolvidosCliente
+                      ? [{ rotulo: "Envolvidos do cliente", valor: a.envolvidosCliente }]
+                      : []),
+                    ...(a.assignee?.name
+                      ? [{ rotulo: "Consultor", valor: a.assignee.name }]
+                      : []),
+                    ...(a.horas != null
+                      ? [{ rotulo: "Esforço", valor: `${a.horas}h` }]
+                      : []),
+                    ...(a.numReunioes
+                      ? [
+                          {
+                            rotulo: "Reuniões",
+                            valor: `${a.numReunioes} ${a.numReunioes > 1 ? "reuniões" : "reunião"}`,
+                          },
+                        ]
+                      : []),
+                    ...(a.dueDate
+                      ? [{ rotulo: "Data prevista", valor: fmtDate(a.dueDate) }]
+                      : []),
+                    ...(a.scheduledAt
+                      ? [{ rotulo: "Reunião agendada", valor: fmtDate(a.scheduledAt) }]
+                      : []),
+                  ];
                   return (
-                    <li
-                      key={a.id}
-                      className="ac-item rounded-md border border-border p-3.5"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="font-medium leading-snug">{a.titulo}</p>
-                        <span
-                          className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${STATUS_TOM[a.status] ?? "bg-muted text-muted-foreground"}`}
-                        >
-                          {STATUS_LABELS[a.status] ?? a.status}
-                        </span>
-                      </div>
+                    <li key={a.id} className="ac-item rounded-md border border-border p-4">
+                      <p className="font-medium leading-snug">{a.titulo}</p>
                       {a.descricao && (
                         <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
                           {a.descricao}
                         </p>
                       )}
-                      <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
-                        {entregou && (
-                          <span>
-                            Responsável pela entrega: <span className="text-foreground font-medium">{entregou}</span>
-                          </span>
-                        )}
-                        {a.envolvidosCliente && (
-                          <span>
-                            Envolvidos: <span className="text-foreground">{a.envolvidosCliente}</span>
-                          </span>
-                        )}
-                        {dataEntrega && (
-                          <span>
-                            {rotuloData}: <span className="text-foreground">{fmtDate(dataEntrega)}</span>
-                          </span>
-                        )}
-                      </div>
+                      {a.pautas && (
+                        <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                          <span className="font-medium text-foreground">Pautas: </span>
+                          {a.pautas}
+                        </p>
+                      )}
+                      <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
+                        {campos.map((c) => (
+                          <div key={c.rotulo}>
+                            <dt className="text-[11px] uppercase tracking-wide text-muted-foreground/70">
+                              {c.rotulo}
+                            </dt>
+                            <dd className="text-sm font-medium">{c.valor}</dd>
+                          </div>
+                        ))}
+                      </dl>
                     </li>
                   );
                 })}
