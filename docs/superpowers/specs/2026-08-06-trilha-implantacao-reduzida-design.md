@@ -51,9 +51,10 @@ Projetos e etapas existentes ficam em `BASE` pelo default. As etapas `REDUZIDA` 
 novas (ver "Seed"). A unicidade/ordem das etapas passa a ser **por trilha**: a
 `ordem` é interpretada dentro da trilha.
 
-## Etapas da trilha Reduzida (default do seed)
+## Etapas da trilha Reduzida (definitivas)
 
-Espelham a Base, com a validação comercial colapsada em "Validação comercial CS":
+São as mesmas da Base, com a validação comercial colapsada em "Validação comercial
+CS" (remove a validação do coordenador, renomeia a do consultor para CS):
 
 1. Contrato assinado
 2. **Validação comercial CS**
@@ -65,14 +66,15 @@ Espelham a Base, com a validação comercial colapsada em "Validação comercial
 8. Finalizado (final)
 9. CS ativo (final)
 
-Sem `StageChecklistTemplate` para nenhuma etapa da trilha Reduzida. A diretoria pode
-ajustar tudo isso pelo editor `/pipeline` (ver abaixo), que é a fonte da verdade.
+Sem `StageChecklistTemplate` para nenhuma etapa da trilha Reduzida. A diretoria ainda
+pode ajustar pelo editor `/pipeline` (ver abaixo), mas este é o conjunto de partida.
 
-> **Nota de permissão (decisão):** a etapa "Validação comercial CS" é, por ora,
-> apenas um **rótulo/estágio**; o controle de mover etapa segue `canMoveStage`
-> (diretoria, coordenação do produto, consultor alocado). Não abrimos permissão de
-> movimentação para o papel CS neste escopo. Se, no uso, o CS precisar mover essa
-> etapa, é um ajuste pequeno de permissão para uma frente futura, registrado aqui.
+> **Permissão do CS (decisão):** na trilha Reduzida o papel **CS pode mover etapas**
+> (é ele quem faz a "Validação comercial CS" e conduz o upsell). Cada movimentação já
+> gera **log automático** no registro do projeto: `moveStage` grava um
+> `StageTransition` com autor e data, exibido na timeline do projeto. Implementação:
+> `canMoveStage` passa a permitir CS quando `project.trilha === REDUZIDA`. Na trilha
+> **Base**, o CS segue sem mover etapas (perfil de leitura, como hoje).
 
 ## Fluxo do "Novo cliente"
 
@@ -127,6 +129,8 @@ misturam no mesmo quadro.
   trilha; não instanciar checklist na Reduzida; primeira etapa pela trilha.
 - Página do projeto (stepper), `moveStage` e checklist: carregar/mover etapas da
   **trilha do projeto**; sem checklist na Reduzida.
+- `src/lib/permissions.ts`: `canMoveStage` permite o papel **CS** quando
+  `project.trilha === REDUZIDA` (segue negando na Base).
 
 ## Migração e compatibilidade
 
@@ -138,6 +142,4 @@ misturam no mesmo quadro.
 ## Fora de escopo
 
 - Trilha Reduzida para Retail (Retail ainda é placeholder).
-- Mudança de permissão para o papel CS mover etapas (registrado como possível
-  follow-up na nota de permissão).
 - Qualquer alteração no fluxo de plano de projeto/checklist da trilha Base.
