@@ -30,11 +30,29 @@ observação notifica o mencionado, com **autocomplete** de nomes.
   para testar local (precisa do agendador no ar), então fazer num momento dedicado.
   Hoje o badge de "Minhas atividades" já cobre isso em tempo real na interface.
 
-**Onda 4 — NÃO INICIADA (dependem de decisão do Bruno):**
-- Justificativa descontar do SLA + pausa por viagem do cliente (definir regras +
-  aprovação do coordenador para não burlar).
-- Comissão do consultor (definir o coeficiente/fórmula — bloqueia o build).
-- Gerar PDF de acompanhamento para o cliente (definir conteúdo/layout).
+**Onda 4 — EM ANDAMENTO (decisões do Bruno registradas em 2026-08-06):**
+
+- ✅ **Comissão do consultor — FEITO** (`/comissao`): **60% da 1ª mensalidade**
+  (valorMensal do LUSO), **a receber no mês seguinte à entrega** (hoje "entregue"
+  = etapa final `isFinal`). Página agrupada por consultor (lista todos os projetos
+  de cada um), com filtro por consultor para coordenação/diretoria; consultor vê só
+  os seus. KPIs: projetada (ativos) e a receber (entregues).
+
+- ⏳ **Justificativa descontar SLA + aprovação — PRÓXIMO (amanhã).** Decisões:
+  - Categorias que justificam/pausam: **Pendência do cliente, Escopo adicional,
+    Problema técnico, Produto**.
+  - **Aprovação do coordenador**: ao criar a justificativa, chega **alerta para o
+    coordenador** com **✓ aprovar / ✗ negar**. Só aprovada desconta do SLA.
+  - No form de criar justificativa, **selecionar o tempo de atraso** (dias).
+  - O tempo aprovado **desconta do prazo total** da implantação (SLA).
+  - (Já existem `DelayJustification`, `DelayCategory`, `ProjectPause` para construir em cima.)
+
+- ⏳ **PDF de acompanhamento — depois.** Decisões:
+  - Conteúdo: **nome do grupo (módulo) + todas as atividades**, **consultor que
+    entregou**, **envolvidos**, **data da entrega**, **resumo da atividade**.
+  - **Layout bonito**, **logo Teknisa**, dentro da identidade visual do sistema
+    (usar skills de design). **1 PDF por projeto**, regerável a cada alteração
+    (gera novo e envia ao cliente).
 
 **Outros:** slot do Check List no wizard de cadastro — FEITO. "Salvar único" do
 pipeline — adiado (ver `ROADMAP-100.md` seção 1).
