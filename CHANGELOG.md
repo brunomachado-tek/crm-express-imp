@@ -27,6 +27,12 @@ vocabulário honesto: ✅ no ar · 🔨 construído, não entregue · 🌿 só e
   histórico. Ranking de motivos do dashboard ignora as **negadas**.
 - Status: 🔨 buildado (tsc + next build limpos) e no ar no imp2 (site saudável pós
   db push). ⏳ verificação funcional pendente (Bruno, na URL viva).
+- **Refino pós-review (mesmo dia):** o desconto do relógio da **etapa** passou a
+  contar só as justificativas **daquela etapa** (o marco contratual segue somando o
+  total), para um atraso aprovado numa etapa anterior não proteger a etapa seguinte.
+  Comentário da regra de aprovação corrigido (consultor justifica, coordenação/
+  diretoria aprova). Seed apaga justificativas de teste antigas (`dias=0`, filtro que
+  nunca pega dado novo, sempre validado com `dias>=1`).
 
 ## 2026-08-03 — Acesso: senha da diretoria, criar usuário direto, trocar senha
 
