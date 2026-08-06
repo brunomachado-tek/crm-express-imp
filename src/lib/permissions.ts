@@ -48,6 +48,13 @@ export function canJustifyDelay(user: SessionUser, project: ProjectScope) {
   return canManageActivities(user, project);
 }
 
+// Aprovar ou negar a justificativa de atraso. É a trava contra o consultor
+// burlar o próprio SLA: só coordenação do produto (e diretoria) decide, nunca
+// quem registrou. Consultor não aparece aqui de propósito.
+export function canApproveDelay(user: SessionUser, project: ProjectScope) {
+  return sameProductOrDiretoria(user, project.productLine);
+}
+
 // Anexar/substituir documentos do contrato.
 export function canUploadDocuments(user: SessionUser, project: ProjectScope) {
   return canManageActivities(user, project);

@@ -70,7 +70,8 @@ model User {
   activities         ProjectActivity[] @relation("assignee")
   delegatedFrom      ProjectActivity[] @relation("delegatedFrom")
   stageTransitions   StageTransition[]
-  delayJustification DelayJustification[]
+  delayJustification DelayJustification[] @relation("delayAuthor")
+  delaysApproved     DelayJustification[] @relation("delayApprover")
   notifications      Notification[]
   checklistDone      ProjectChecklistItem[]
   healthLogs         HealthLog[]
@@ -516,18 +517,32 @@ model ProjectPause {
   motivo    String?
 }
 
+// Estado da aprovação da justificativa pelo coordenador. Só APROVADA desconta
+// dias do SLA (etapa + marco contratual). Nasce PENDENTE e dispara alerta.
+enum DelayStatus {
+  PENDENTE
+  APROVADA
+  NEGADA
+}
+
 model DelayJustification {
-  id         String        @id @default(cuid())
-  projectId  String
-  project    Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  stageId    String
-  stage      PipelineStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
-  categoryId String
-  category   DelayCategory @relation(fields: [categoryId], references: [id])
-  detalhe    String?
-  byUserId   String?
-  byUser     User?         @relation(fields: [byUserId], references: [id])
-  at         DateTime      @default(now())
+  id           String        @id @default(cuid())
+  projectId    String
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stageId      String
+  stage        PipelineStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  categoryId   String
+  category     DelayCategory @relation(fields: [categoryId], references: [id])
+  detalhe      String?
+  dias         Int           @default(0) // dias de atraso pedidos; descontam do SLA quando aprovada
+  status       DelayStatus   @default(PENDENTE)
+  byUserId     String?
+  byUser       User?         @relation("delayAuthor", fields: [byUserId], references: [id])
+  // Decisão do coordenador: quem e quando. O `status` diz se aprovou ou negou.
+  approvedById String?
+  approvedBy   User?         @relation("delayApprover", fields: [approvedById], references: [id])
+  approvedAt   DateTime?
+  at           DateTime      @default(now())
 }
 
 // ─── Timeline, notificações, CS ─────────────────────────────────────

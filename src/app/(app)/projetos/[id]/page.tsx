@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { slaFor, contractMilestones } from "@/lib/sla";
+import { slaFor, contractMilestones, somaDescontoAprovado } from "@/lib/sla";
 import { loadStages } from "@/lib/pipeline";
 import { fmtDate, brl } from "@/lib/format";
 import { addComment, pauseProject, resumeProject, cancelProject } from "@/lib/actions";
@@ -19,6 +19,7 @@ import {
   canAllocateConsultant,
   canCancelProject,
   canJustifyDelay,
+  canApproveDelay,
   canManageActivities,
   canPauseResumeProject,
   canUploadDocuments,
@@ -89,8 +90,10 @@ export default async function ProjetoPage({
   if (!project || project.deleted) notFound();
 
   const stages = await loadStages();
-  const sla = slaFor(project);
-  const milestones = contractMilestones(project);
+  // Dias de atraso já aprovados esticam os dois relógios (etapa e marco contratual).
+  const descontoAtraso = somaDescontoAprovado(project.delays);
+  const sla = slaFor(project, undefined, descontoAtraso);
+  const milestones = contractMilestones(project, undefined, descontoAtraso);
   const currentChecklist = project.checklist.filter((c) => c.stageId === project.stageId);
   const checklistDone = currentChecklist.every((c) => c.done);
   const consultants = await db.user.findMany({
@@ -121,6 +124,7 @@ export default async function ProjetoPage({
   const canCancel = canCancelProject(user, project.productLine);
   const canManage = canManageActivities(user, project);
   const canDelay = canJustifyDelay(user, project);
+  const canApproveAtraso = canApproveDelay(user, project);
   const canUpload = canUploadDocuments(user, project);
   const showAssigneeSelect = user.role === "DIRETORIA" || user.role === "COORDENACAO";
 
@@ -145,7 +149,7 @@ export default async function ProjetoPage({
       key: `d-${d.id}`,
       at: d.at,
       who: d.byUser?.name,
-      text: `Justificativa de atraso (${d.stage.nome}): ${d.category.nome}${d.detalhe ? `. ${d.detalhe}` : ""}`,
+      text: `Justificativa de atraso (${d.stage.nome}, ${d.dias} dia${d.dias === 1 ? "" : "s"}): ${d.category.nome}${d.detalhe ? `. ${d.detalhe}` : ""}`,
       kind: "ATRASO",
     })),
   ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
@@ -276,6 +280,7 @@ export default async function ProjetoPage({
         <DelayCard
           projectId={project.id}
           canDelay={canDelay}
+          canApprove={canApproveAtraso}
           categorias={delayCategories}
           atrasos={project.delays}
         />

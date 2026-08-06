@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { slaFor, contractMilestones } from "@/lib/sla";
+import { slaFor, contractMilestones, somaDescontoAprovado } from "@/lib/sla";
 import { loadStages } from "@/lib/pipeline";
 import {
   agingAtivos,
@@ -143,8 +143,11 @@ export default async function DashboardPage({
   const paused = projects.filter((p) => p.status === "PAUSADO");
 
   type Ativo = (typeof active)[number];
-  const marcoVencido = (p: Ativo) => contractMilestones(p).some((m) => m.diasRestantes < 0);
-  const projetoAtrasado = (p: Ativo) => slaFor(p).atrasado || marcoVencido(p);
+  // Dias de atraso aprovados descontam dos dois relógios (etapa e marco contratual).
+  const desconto = (p: Ativo) => somaDescontoAprovado(p.delays);
+  const marcoVencido = (p: Ativo) =>
+    contractMilestones(p, undefined, desconto(p)).some((m) => m.diasRestantes < 0);
+  const projetoAtrasado = (p: Ativo) => slaFor(p, undefined, desconto(p)).atrasado || marcoVencido(p);
   const atrasadosAtivos = active.filter(projetoAtrasado);
 
   const sla = mediaImplantacao(done);
@@ -152,8 +155,9 @@ export default async function DashboardPage({
   // ── Atenção necessária (atrasados com motivo + marcos a vencer) ──
   const atencao = active
     .map((p) => {
-      const s = slaFor(p);
-      const marcoV = contractMilestones(p).find((m) => m.diasRestantes < 0);
+      const d = desconto(p);
+      const s = slaFor(p, undefined, d);
+      const marcoV = contractMilestones(p, undefined, d).find((m) => m.diasRestantes < 0);
       const motivo = s.atrasado
         ? `Etapa: ${s.diasTeknisa - (s.idealDays ?? 0)}d além do prazo`
         : marcoV
@@ -166,7 +170,7 @@ export default async function DashboardPage({
 
   const marcosProximos = active
     .flatMap((p) =>
-      contractMilestones(p)
+      contractMilestones(p, undefined, desconto(p))
         .filter((m) => m.critico && m.diasRestantes >= 0)
         .map((m) => ({ project: p, m }))
     )
@@ -205,7 +209,11 @@ export default async function DashboardPage({
   const taxaCancel = projects.length > 0 ? Math.round((cancelados.length / projects.length) * 100) : 0;
   // Ranking dos motivos de atraso (justificativas), por categoria.
   const motivosMap = new Map<string, number>();
-  for (const p of projects) for (const d of p.delays) motivosMap.set(d.category.nome, (motivosMap.get(d.category.nome) ?? 0) + 1);
+  // Negadas não são motivo real de atraso: ficam de fora do ranking.
+  for (const p of projects)
+    for (const d of p.delays)
+      if (d.status !== "NEGADA")
+        motivosMap.set(d.category.nome, (motivosMap.get(d.category.nome) ?? 0) + 1);
   const motivos = [...motivosMap.entries()].map(([nome, n]) => ({ nome, n })).sort((a, b) => b.n - a.n);
   const totalMotivos = motivos.reduce((s, m) => s + m.n, 0);
   // Tempo parado por pendência do cliente (soma/média das pausas).

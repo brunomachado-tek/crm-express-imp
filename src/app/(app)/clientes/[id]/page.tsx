@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { brl, fmtDate } from "@/lib/format";
-import { slaFor } from "@/lib/sla";
+import { slaFor, somaDescontoAprovado } from "@/lib/sla";
 import { canDeleteClient, canEditClient, canHardDeleteClient } from "@/lib/permissions";
 import {
   addContactAction,
@@ -102,6 +102,7 @@ export default async function ClientePage({
           units: true,
           documents: { orderBy: { uploadedAt: "desc" } },
           modules: { include: { moduleTemplate: true } },
+          delays: { where: { status: "APROVADA" }, select: { status: true, dias: true } },
         },
         orderBy: { createdAt: "desc" },
       },
@@ -347,7 +348,7 @@ export default async function ClientePage({
         <h2 className="text-sm font-semibold text-foreground/80">Projetos de implantação</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           {client.projects.map((p) => {
-            const sla = slaFor(p);
+            const sla = slaFor(p, undefined, somaDescontoAprovado(p.delays));
             return (
               <Link
                 key={p.id}

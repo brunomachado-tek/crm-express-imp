@@ -13,7 +13,17 @@ type ProjectWithStage = Pick<Project, "stageEnteredAt"> & {
   stage: Pick<PipelineStage, "idealDays" | "isFinal">;
 };
 
-export function slaFor(project: ProjectWithStage, now = new Date()): SlaInfo {
+// Soma os dias de atraso já aprovados pelo coordenador. Só o que está APROVADA
+// desconta do prazo; pendente e negada não contam.
+export function somaDescontoAprovado(
+  delays: { status: string; dias: number }[]
+): number {
+  return delays.reduce((s, d) => (d.status === "APROVADA" ? s + (d.dias ?? 0) : s), 0);
+}
+
+// `descontoDias`: dias de atraso aprovados pelo coordenador, que viram folga extra
+// no relógio da etapa (mesma ideia de uma pausa autorizada).
+export function slaFor(project: ProjectWithStage, now = new Date(), descontoDias = 0): SlaInfo {
   const entered = new Date(project.stageEnteredAt);
   const diasNaEtapa = Math.max(0, daysBetween(entered, now));
 
@@ -24,7 +34,10 @@ export function slaFor(project: ProjectWithStage, now = new Date()): SlaInfo {
     const end = p.endedAt ? new Date(p.endedAt) : now;
     if (end > start) pausedMs += end.getTime() - start.getTime();
   }
-  const diasTeknisa = Math.max(0, diasNaEtapa - Math.floor(pausedMs / (24 * 60 * 60 * 1000)));
+  const diasTeknisa = Math.max(
+    0,
+    diasNaEtapa - Math.floor(pausedMs / (24 * 60 * 60 * 1000)) - Math.max(0, descontoDias)
+  );
 
   const idealDays = project.stage.idealDays ?? null;
 
@@ -57,7 +70,8 @@ export function contractMilestones(
     stage: Pick<PipelineStage, "isFinal">;
     contracts?: Pick<Contract, "kind" | "prazoTreinamentoDias">[];
   },
-  now = new Date()
+  now = new Date(),
+  descontoDias = 0
 ): ContractMilestone[] {
   if (!project.dataContrato || project.status !== "ATIVO") return [];
   if (project.stage.isFinal) return [];
@@ -65,7 +79,8 @@ export function contractMilestones(
 
   const luso = project.contracts?.find((c) => c.kind === "LUSO");
   const doContrato = luso?.prazoTreinamentoDias ?? project.contracts?.[0]?.prazoTreinamentoDias;
-  const JANELA_DIAS = doContrato ?? PRAZO_TREINAMENTO_PADRAO;
+  // Dias de atraso aprovados esticam a janela contratual do treinamento.
+  const JANELA_DIAS = (doContrato ?? PRAZO_TREINAMENTO_PADRAO) + Math.max(0, descontoDias);
   const t2m = new Date(assinatura.getTime() + JANELA_DIAS * 24 * 60 * 60 * 1000);
   return [
     {

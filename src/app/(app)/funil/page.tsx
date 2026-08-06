@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
-import { slaFor } from "@/lib/sla";
+import { slaFor, somaDescontoAprovado } from "@/lib/sla";
 import { loadStages } from "@/lib/pipeline";
 import { FunilBoard, type CardBoard } from "@/components/funil/funil-board";
 import { canMoveStage } from "@/lib/permissions";
@@ -30,6 +30,7 @@ export default async function FunilPage({
         checklist: { orderBy: { ordem: "asc" } },
         contracts: { where: { kind: "LUSO" } },
         modules: { include: { moduleTemplate: true } },
+        delays: { where: { status: "APROVADA" }, select: { status: true, dias: true } },
       },
       orderBy: { stageEnteredAt: "asc" },
     }),
@@ -48,7 +49,7 @@ export default async function FunilPage({
     valorMensal: p.contracts[0]?.valorMensal ?? null,
     consultor: p.consultant?.name ?? null,
     status: p.status,
-    sla: slaFor(p),
+    sla: slaFor(p, undefined, somaDescontoAprovado(p.delays)),
     temAditivo: p.modules.some((m) => m.isAditivo),
     // Todo mundo enxerga o quadro; só quem toca a implantação arrasta o card.
     // A action confere de novo no servidor.

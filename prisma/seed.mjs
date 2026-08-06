@@ -55,18 +55,25 @@ async function main() {
   });
   console.log("Conta da diretoria (bruno.machado@teknisa.com) com senha inicial: teknisa123");
 
-  // ── Categorias de justificativa de atraso (genéricas — ajustar depois) ──
+  // ── Categorias de justificativa de atraso (decisão do Bruno, 2026-08-06) ──
   const delayCategories = [
     "Pendência do cliente",
     "Escopo adicional",
-    "Indisponibilidade do consultor",
-    "Problema técnico / produto",
-    "Hardware / infra do cliente",
-    "Outro",
+    "Problema técnico",
+    "Produto",
   ];
   for (const nome of delayCategories) {
-    await prisma.delayCategory.upsert({ where: { nome }, update: {}, create: { nome } });
+    await prisma.delayCategory.upsert({
+      where: { nome },
+      update: { active: true },
+      create: { nome },
+    });
   }
+  // Categorias antigas somem do seletor sem apagar o histórico já registrado.
+  await prisma.delayCategory.updateMany({
+    where: { nome: { notIn: delayCategories } },
+    data: { active: false },
+  });
 
   // ── Pipeline (etapas do funil, com prazo ideal/SLA e flag de etapa final) ──
   // Editável em /pipeline: estes são só os valores de partida.

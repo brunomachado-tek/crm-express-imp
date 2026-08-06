@@ -22,6 +22,7 @@ import {
   canEditUserRoles,
   canInviteUsers,
   canJustifyDelay,
+  canApproveDelay,
   canManageActivities,
   canMoveStage,
   canPauseResumeProject,
@@ -1789,7 +1790,10 @@ export async function cancelProject(formData: FormData) {
 export async function justifyDelay(formData: FormData) {
   const user = await requireUser();
   const projectId = String(formData.get("projectId"));
-  const project = await db.project.findUniqueOrThrow({ where: { id: projectId } });
+  const project = await db.project.findUniqueOrThrow({
+    where: { id: projectId },
+    include: { client: true, stage: true },
+  });
   if (!canJustifyDelay(user, project)) {
     redirect(`/projetos/${projectId}?erro=permissao`);
   }
@@ -1799,16 +1803,111 @@ export async function justifyDelay(formData: FormData) {
   const categoria = await db.delayCategory.findFirst({ where: { id: categoryId, active: true } });
   if (!categoria) redirect(`/projetos/${projectId}?erro=categoria`);
 
+  // Dias de atraso: inteiro entre 1 e 365. Entrada de formulário não é confiável.
+  const dias = Math.trunc(Number(formData.get("dias")));
+  if (!Number.isFinite(dias) || dias < 1 || dias > 365) {
+    redirect(`/projetos/${projectId}?erro=dias`);
+  }
+
   await db.delayJustification.create({
     data: {
       projectId,
       stageId: project.stageId,
       categoryId,
+      dias,
+      status: "PENDENTE",
       detalhe: String(formData.get("detalhe") ?? "").trim() || null,
       byUserId: user.id,
     },
   });
+
+  // Alerta para a coordenação do produto decidir (aprovar/negar). Diretoria não
+  // recebe: a decisão é do coordenador; se não houver nenhum ativo, cai num
+  // broadcast para não ficar sem dono.
+  const coordenadores = await db.user.findMany({
+    where: {
+      role: "COORDENACAO",
+      productLine: project.productLine,
+      active: true,
+      status: "APROVADO",
+      deletedAt: null,
+    },
+    select: { id: true },
+  });
+  const titulo = `Justificativa de atraso aguardando aprovação: ${project.client.razaoSocial}`;
+  const corpo = `${user.name} pediu ${dias} dia${dias === 1 ? "" : "s"} por "${categoria.nome}" na etapa "${project.stage.nome}".`;
+  if (coordenadores.length > 0) {
+    await db.notification.createMany({
+      data: coordenadores.map((c) => ({
+        userId: c.id,
+        projectId,
+        tipo: "APROVACAO_ATRASO",
+        titulo,
+        corpo,
+      })),
+    });
+  } else {
+    await db.notification.create({
+      data: { userId: null, projectId, tipo: "APROVACAO_ATRASO", titulo, corpo },
+    });
+  }
+
   revalidatePath(`/projetos/${projectId}`);
+  revalidatePath("/", "layout");
+}
+
+// Coordenador aprova (desconta do SLA) ou nega a justificativa. Trava a auto
+// aprovação: quem registrou não pode decidir a própria (canApproveDelay já
+// exclui o consultor, mas reforçamos que não é o autor).
+async function decidirAtraso(formData: FormData, aprovar: boolean) {
+  const user = await requireUser();
+  const id = String(formData.get("justificativaId"));
+  const justificativa = await db.delayJustification.findUniqueOrThrow({
+    where: { id },
+    include: { project: { include: { client: true } } },
+  });
+  const projectId = justificativa.projectId;
+  if (!canApproveDelay(user, justificativa.project)) {
+    redirect(`/projetos/${projectId}?erro=permissao`);
+  }
+  if (justificativa.status !== "PENDENTE") redirect(`/projetos/${projectId}`);
+
+  await db.delayJustification.update({
+    where: { id },
+    data: {
+      status: aprovar ? "APROVADA" : "NEGADA",
+      approvedById: user.id,
+      approvedAt: new Date(),
+    },
+  });
+
+  // Avisa quem registrou o desfecho.
+  if (justificativa.byUserId) {
+    await db.notification.create({
+      data: {
+        userId: justificativa.byUserId,
+        projectId,
+        tipo: "APROVACAO_ATRASO",
+        titulo: aprovar
+          ? `Justificativa de atraso aprovada: ${justificativa.project.client.razaoSocial}`
+          : `Justificativa de atraso negada: ${justificativa.project.client.razaoSocial}`,
+        corpo: aprovar
+          ? `${user.name} aprovou ${justificativa.dias} dia${justificativa.dias === 1 ? "" : "s"} de desconto no SLA.`
+          : `${user.name} negou o pedido de ${justificativa.dias} dia${justificativa.dias === 1 ? "" : "s"}.`,
+      },
+    });
+  }
+
+  revalidatePath(`/projetos/${projectId}`);
+  revalidatePath("/", "layout");
+}
+
+export async function approveDelayJustification(formData: FormData) {
+  await decidirAtraso(formData, true);
+}
+
+export async function rejectDelayJustification(formData: FormData) {
+  await decidirAtraso(formData, false);
 }
 
 export async function deleteDelayJustification(formData: FormData) {
