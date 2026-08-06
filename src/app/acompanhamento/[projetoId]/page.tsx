@@ -168,6 +168,12 @@ export default async function AcompanhamentoPage({ params }: { params: Promise<P
                           {a.pautas}
                         </p>
                       )}
+                      {a.observacao && (
+                        <p className="text-sm mt-2 leading-relaxed rounded-md bg-muted px-3 py-2">
+                          <span className="font-medium">Observação: </span>
+                          <span className="text-muted-foreground">{a.observacao}</span>
+                        </p>
+                      )}
                       <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">
                         {campos.map((c) => (
                           <div key={c.rotulo}>
