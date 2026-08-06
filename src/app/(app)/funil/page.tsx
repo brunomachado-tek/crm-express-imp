@@ -30,7 +30,7 @@ export default async function FunilPage({
         checklist: { orderBy: { ordem: "asc" } },
         contracts: { where: { kind: "LUSO" } },
         modules: { include: { moduleTemplate: true } },
-        delays: { where: { status: "APROVADA" }, select: { status: true, dias: true } },
+        delays: { where: { status: "APROVADA" }, select: { status: true, dias: true, stageId: true } },
       },
       orderBy: { stageEnteredAt: "asc" },
     }),
@@ -49,7 +49,7 @@ export default async function FunilPage({
     valorMensal: p.contracts[0]?.valorMensal ?? null,
     consultor: p.consultant?.name ?? null,
     status: p.status,
-    sla: slaFor(p, undefined, somaDescontoAprovado(p.delays)),
+    sla: slaFor(p, undefined, somaDescontoAprovado(p.delays, p.stageId)),
     temAditivo: p.modules.some((m) => m.isAditivo),
     // Todo mundo enxerga o quadro; só quem toca a implantação arrasta o card.
     // A action confere de novo no servidor.

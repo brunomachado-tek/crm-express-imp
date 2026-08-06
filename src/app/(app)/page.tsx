@@ -143,11 +143,14 @@ export default async function DashboardPage({
   const paused = projects.filter((p) => p.status === "PAUSADO");
 
   type Ativo = (typeof active)[number];
-  // Dias de atraso aprovados descontam dos dois relógios (etapa e marco contratual).
-  const desconto = (p: Ativo) => somaDescontoAprovado(p.delays);
+  // Dias de atraso aprovados: o relógio da etapa conta só as justificativas da
+  // etapa atual; o marco contratual (prazo total) soma tudo.
+  const descEtapa = (p: Ativo) => somaDescontoAprovado(p.delays, p.stageId);
+  const descTotal = (p: Ativo) => somaDescontoAprovado(p.delays);
   const marcoVencido = (p: Ativo) =>
-    contractMilestones(p, undefined, desconto(p)).some((m) => m.diasRestantes < 0);
-  const projetoAtrasado = (p: Ativo) => slaFor(p, undefined, desconto(p)).atrasado || marcoVencido(p);
+    contractMilestones(p, undefined, descTotal(p)).some((m) => m.diasRestantes < 0);
+  const projetoAtrasado = (p: Ativo) =>
+    slaFor(p, undefined, descEtapa(p)).atrasado || marcoVencido(p);
   const atrasadosAtivos = active.filter(projetoAtrasado);
 
   const sla = mediaImplantacao(done);
@@ -155,9 +158,8 @@ export default async function DashboardPage({
   // ── Atenção necessária (atrasados com motivo + marcos a vencer) ──
   const atencao = active
     .map((p) => {
-      const d = desconto(p);
-      const s = slaFor(p, undefined, d);
-      const marcoV = contractMilestones(p, undefined, d).find((m) => m.diasRestantes < 0);
+      const s = slaFor(p, undefined, descEtapa(p));
+      const marcoV = contractMilestones(p, undefined, descTotal(p)).find((m) => m.diasRestantes < 0);
       const motivo = s.atrasado
         ? `Etapa: ${s.diasTeknisa - (s.idealDays ?? 0)}d além do prazo`
         : marcoV
@@ -170,7 +172,7 @@ export default async function DashboardPage({
 
   const marcosProximos = active
     .flatMap((p) =>
-      contractMilestones(p, undefined, desconto(p))
+      contractMilestones(p, undefined, descTotal(p))
         .filter((m) => m.critico && m.diasRestantes >= 0)
         .map((m) => ({ project: p, m }))
     )

@@ -15,10 +15,19 @@ type ProjectWithStage = Pick<Project, "stageEnteredAt"> & {
 
 // Soma os dias de atraso já aprovados pelo coordenador. Só o que está APROVADA
 // desconta do prazo; pendente e negada não contam.
+// `stageId` opcional: quando passado, conta só as justificativas daquela etapa.
+// É o que evita um atraso aprovado numa etapa anterior seguir descontando a
+// etapa atual (o relógio da etapa reinicia a cada avanço). O marco contratual,
+// por ser prazo total da implantação, soma tudo (chama sem stageId).
 export function somaDescontoAprovado(
-  delays: { status: string; dias: number }[]
+  delays: { status: string; dias: number; stageId?: string }[],
+  stageId?: string
 ): number {
-  return delays.reduce((s, d) => (d.status === "APROVADA" ? s + (d.dias ?? 0) : s), 0);
+  return delays.reduce((s, d) => {
+    if (d.status !== "APROVADA") return s;
+    if (stageId !== undefined && d.stageId !== stageId) return s;
+    return s + (d.dias ?? 0);
+  }, 0);
 }
 
 // `descontoDias`: dias de atraso aprovados pelo coordenador, que viram folga extra

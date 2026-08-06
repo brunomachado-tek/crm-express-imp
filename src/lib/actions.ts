@@ -1856,9 +1856,9 @@ export async function justifyDelay(formData: FormData) {
   revalidatePath("/", "layout");
 }
 
-// Coordenador aprova (desconta do SLA) ou nega a justificativa. Trava a auto
-// aprovação: quem registrou não pode decidir a própria (canApproveDelay já
-// exclui o consultor, mas reforçamos que não é o autor).
+// Regra: o consultor justifica o atraso, a coordenação/diretoria aprova ou nega.
+// `canApproveDelay` deixa isso só com coordenação do produto e diretoria (o
+// consultor, autor típico, não decide). Aprovar desconta os dias do SLA.
 async function decidirAtraso(formData: FormData, aprovar: boolean) {
   const user = await requireUser();
   const id = String(formData.get("justificativaId"));

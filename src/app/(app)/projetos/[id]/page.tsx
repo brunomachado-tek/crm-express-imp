@@ -90,10 +90,12 @@ export default async function ProjetoPage({
   if (!project || project.deleted) notFound();
 
   const stages = await loadStages();
-  // Dias de atraso já aprovados esticam os dois relógios (etapa e marco contratual).
-  const descontoAtraso = somaDescontoAprovado(project.delays);
-  const sla = slaFor(project, undefined, descontoAtraso);
-  const milestones = contractMilestones(project, undefined, descontoAtraso);
+  // Dias de atraso aprovados esticam os dois relógios: o da etapa conta só as
+  // justificativas da etapa atual; o marco contratual (prazo total) soma tudo.
+  const descontoEtapa = somaDescontoAprovado(project.delays, project.stageId);
+  const descontoTotal = somaDescontoAprovado(project.delays);
+  const sla = slaFor(project, undefined, descontoEtapa);
+  const milestones = contractMilestones(project, undefined, descontoTotal);
   const currentChecklist = project.checklist.filter((c) => c.stageId === project.stageId);
   const checklistDone = currentChecklist.every((c) => c.done);
   const consultants = await db.user.findMany({

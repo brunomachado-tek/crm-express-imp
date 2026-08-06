@@ -74,6 +74,10 @@ async function main() {
     where: { nome: { notIn: delayCategories } },
     data: { active: false },
   });
+  // Limpeza das justificativas de teste anteriores à feature de aprovação: elas
+  // ficaram com dias=0 (a coluna nasceu com esse default). Toda justificativa
+  // nova é validada com dias>=1, então esse filtro nunca pega dado legítimo.
+  await prisma.delayJustification.deleteMany({ where: { dias: 0 } });
 
   // ── Pipeline (etapas do funil, com prazo ideal/SLA e flag de etapa final) ──
   // Editável em /pipeline: estes são só os valores de partida.
