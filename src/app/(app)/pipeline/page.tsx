@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { canEditPipeline } from "@/lib/permissions";
@@ -31,14 +32,17 @@ function InsertButton({
   refId,
   lado,
   texto,
+  trilha,
 }: {
   refId: string | null;
   lado: "left" | "right";
   texto: string;
+  trilha: string;
 }) {
   return (
     <form action={addPipelineStage} className="flex justify-center">
       <input type="hidden" name="lado" value={lado} />
+      <input type="hidden" name="trilha" value={trilha} />
       {refId && <input type="hidden" name="refId" value={refId} />}
       <button
         type="submit"
@@ -50,10 +54,15 @@ function InsertButton({
   );
 }
 
-export default async function PipelinePage() {
+export default async function PipelinePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ trilha?: string }>;
+}) {
   const user = await requireUser();
   const canEdit = canEditPipeline(user);
-  const stages = await db.pipelineStage.findMany({ orderBy: { ordem: "asc" } });
+  const trilha = (await searchParams).trilha === "REDUZIDA" ? "REDUZIDA" : "BASE";
+  const stages = await db.pipelineStage.findMany({ where: { trilha }, orderBy: { ordem: "asc" } });
 
   // contagem de projetos por etapa, para avisar antes de apagar
   const counts = await db.project.groupBy({
@@ -84,9 +93,33 @@ export default async function PipelinePage() {
         <p className="text-sm text-muted-foreground mt-1">
           As etapas do funil de implantação. Crie, renomeie, reordene ou apague. O prazo fica{" "}
           <strong className="text-foreground">entre as etapas</strong>: é o tempo para sair de uma e
-          chegar à próxima. Vale para os dois funis (TecFood e Retail).
+          chegar à próxima.
         </p>
       </div>
+
+      {/* Trilha: Base (cliente novo) x Reduzida (upsell de cliente existente) */}
+      <div className="inline-flex rounded-md border border-border bg-card p-0.5 text-sm">
+        {(["BASE", "REDUZIDA"] as const).map((t) => {
+          const ativo = trilha === t;
+          return (
+            <Link
+              key={t}
+              href={`/pipeline?trilha=${t}`}
+              className={`px-3 py-1.5 rounded font-medium transition-colors ${
+                ativo ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              {t === "BASE" ? "Base" : "Reduzida"}
+            </Link>
+          );
+        })}
+      </div>
+      {trilha === "REDUZIDA" && (
+        <p className="text-xs text-muted-foreground">
+          Trilha do upsell (cliente Teknisa contratando novo módulo). Implantação mais curta e sem
+          checklist por etapa.
+        </p>
+      )}
 
       {!canEdit && (
         <div className="rounded-md border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
@@ -95,7 +128,9 @@ export default async function PipelinePage() {
       )}
 
       <div className="space-y-3">
-        {canEdit && <InsertButton refId={stages[0]?.id ?? null} lado="left" texto="Etapa no início" />}
+        {canEdit && (
+          <InsertButton refId={stages[0]?.id ?? null} lado="left" texto="Etapa no início" trilha={trilha} />
+        )}
 
         {stages.map((s, i) => {
           const nProjetos = countByStage.get(s.id) ?? 0;
@@ -120,6 +155,7 @@ export default async function PipelinePage() {
                     <div className="flex items-center gap-1">
                       <form action={movePipelineStage}>
                         <input type="hidden" name="stageId" value={s.id} />
+                        <input type="hidden" name="trilha" value={trilha} />
                         <input type="hidden" name="dir" value="left" />
                         <button
                           type="submit"
@@ -132,6 +168,7 @@ export default async function PipelinePage() {
                       </form>
                       <form action={movePipelineStage}>
                         <input type="hidden" name="stageId" value={s.id} />
+                        <input type="hidden" name="trilha" value={trilha} />
                         <input type="hidden" name="dir" value="right" />
                         <button
                           type="submit"
@@ -144,6 +181,7 @@ export default async function PipelinePage() {
                       </form>
                       <form action={deletePipelineStage}>
                         <input type="hidden" name="stageId" value={s.id} />
+                        <input type="hidden" name="trilha" value={trilha} />
                         <button
                           type="submit"
                           title={nProjetos > 0 ? "Apagar (projetos vão para a etapa vizinha)" : "Apagar etapa"}
@@ -159,6 +197,7 @@ export default async function PipelinePage() {
                 {canEdit ? (
                   <form action={savePipelineStage} className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
                     <input type="hidden" name="stageId" value={s.id} />
+                    <input type="hidden" name="trilha" value={trilha} />
                     <div className="space-y-1.5">
                       <label className={fieldLabel}>Nome da etapa</label>
                       <input name="nome" defaultValue={s.nome} required className={fieldInput} />
@@ -185,7 +224,7 @@ export default async function PipelinePage() {
                   <p className="text-sm font-medium">{s.nome}</p>
                 )}
 
-                {canEdit && (
+                {canEdit && trilha === "BASE" && (
                   <div className="mt-3 pt-3 border-t border-border">
                     <p className={`${fieldLabel} mb-2`}>Checklist obrigatório desta etapa</p>
                     <ul className="space-y-1.5 mb-2">
@@ -234,6 +273,7 @@ export default async function PipelinePage() {
                   {canEdit ? (
                     <form action={savePipelineTransicao} className="flex items-end gap-2">
                       <input type="hidden" name="stageId" value={s.id} />
+                      <input type="hidden" name="trilha" value={trilha} />
                       <div className="space-y-1">
                         <label className={fieldLabel}>
                           Prazo para avançar para <strong className="text-foreground">{stages[i + 1].nome}</strong>
@@ -267,7 +307,7 @@ export default async function PipelinePage() {
                   )}
                   {canEdit && (
                     <div className="ml-auto">
-                      <InsertButton refId={s.id} lado="right" texto="Etapa aqui" />
+                      <InsertButton refId={s.id} lado="right" texto="Etapa aqui" trilha={trilha} />
                     </div>
                   )}
                 </div>
@@ -275,7 +315,7 @@ export default async function PipelinePage() {
               {/* Depois da última etapa, só o botão de inserir. */}
               {canEdit && i === stages.length - 1 && (
                 <div className="py-2">
-                  <InsertButton refId={s.id} lado="right" texto="Etapa no fim" />
+                  <InsertButton refId={s.id} lado="right" texto="Etapa no fim" trilha={trilha} />
                 </div>
               )}
             </div>
@@ -283,7 +323,7 @@ export default async function PipelinePage() {
         })}
 
         {stages.length === 0 && canEdit && (
-          <InsertButton refId={null} lado="right" texto="Criar primeira etapa" />
+          <InsertButton refId={null} lado="right" texto="Criar primeira etapa" trilha={trilha} />
         )}
       </div>
 

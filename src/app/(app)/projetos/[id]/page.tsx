@@ -89,7 +89,7 @@ export default async function ProjetoPage({
   });
   if (!project || project.deleted) notFound();
 
-  const stages = await loadStages();
+  const stages = await loadStages(project.trilha);
   // Dias de atraso aprovados esticam os dois relógios: o da etapa conta só as
   // justificativas da etapa atual; o marco contratual (prazo total) soma tudo.
   const descontoEtapa = somaDescontoAprovado(project.delays, project.stageId);

@@ -30,6 +30,9 @@ function brl(v: number | null) {
 }
 
 export function NovoClienteForm({ modules }: { modules: Modulo[] }) {
+  // Passo 0: cliente novo (trilha Base) x cliente Teknisa contratando módulo novo
+  // (upsell, trilha Reduzida, só contrato). null = ainda não escolheu.
+  const [ehCliente, setEhCliente] = useState<boolean | null>(null);
   const [lendo, startLendo] = useTransition();
   const [dados, setDados] = useState<LeituraContrato | null>(null);
   const [avisos, setAvisos] = useState<string[]>([]);
@@ -159,6 +162,39 @@ export function NovoClienteForm({ modules }: { modules: Modulo[] }) {
 
   return (
     <form action={createClientProject} className="space-y-5">
+      <input type="hidden" name="ehClienteTeknisa" value={ehCliente ? "1" : "0"} />
+
+      {/* Passo 0: cliente novo x cliente Teknisa (upsell, trilha reduzida) */}
+      <section className="bg-card border border-border rounded-lg p-6">
+        <h2 className="text-sm font-semibold">Este cadastro é de</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          Cliente novo segue a implantação completa. Cliente Teknisa contratando um módulo novo
+          segue a implantação reduzida (só o contrato, sem plano de projeto e sem checklist).
+        </p>
+        <div className="mt-4 grid sm:grid-cols-2 gap-3">
+          {(
+            [
+              { v: false, t: "Não é cliente Teknisa", d: "Cliente novo. Implantação completa." },
+              { v: true, t: "É cliente Teknisa", d: "Novo módulo de quem já é cliente. Implantação reduzida." },
+            ] as const
+          ).map((o) => (
+            <button
+              type="button"
+              key={o.t}
+              onClick={() => setEhCliente(o.v)}
+              className={`text-left rounded-md border px-4 py-3 transition-colors ${
+                ehCliente === o.v ? "border-primary bg-primary/5" : "border-border hover:bg-muted"
+              }`}
+            >
+              <span className="block text-sm font-medium">{o.t}</span>
+              <span className="block text-xs text-muted-foreground mt-0.5">{o.d}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {ehCliente !== null && (
+        <>
       {/* Passo 1: o contrato. Fica fora do bloco remontado para que o arquivo
           escolhido continue no formulário e seja enviado junto no cadastro. */}
       <section className="bg-card border border-border rounded-lg p-6">
@@ -282,6 +318,10 @@ export function NovoClienteForm({ modules }: { modules: Modulo[] }) {
         </div>
       </section>
 
+      {/* Plano de projeto e Check List de Aceite só no cliente novo (trilha Base).
+          No upsell é só o contrato. */}
+      {!ehCliente && (
+        <>
       {/* Passo 2: plano de projeto (opcional). Traz os módulos contratados por
           nome, o usuário-chave e a previsão de início/término. */}
       <section className="bg-card border border-border rounded-lg p-6">
@@ -453,6 +493,8 @@ export function NovoClienteForm({ modules }: { modules: Modulo[] }) {
           </div>
         </div>
       </section>
+        </>
+      )}
 
       {pronto && (
         <div key={versao} className="bg-card border border-border rounded-lg p-6 space-y-6">
@@ -776,6 +818,8 @@ export function NovoClienteForm({ modules }: { modules: Modulo[] }) {
             <SubmitButton />
           </div>
         </div>
+      )}
+        </>
       )}
     </form>
   );

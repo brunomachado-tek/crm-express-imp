@@ -10,7 +10,7 @@ import type { ProductLine } from "@prisma/client";
 export default async function FunilPage({
   searchParams,
 }: {
-  searchParams: Promise<{ funil?: string }>;
+  searchParams: Promise<{ funil?: string; trilha?: string }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -18,10 +18,11 @@ export default async function FunilPage({
     params.funil === "RETAIL" || params.funil === "TECFOOD"
       ? (params.funil as ProductLine)
       : user.productLine ?? "TECFOOD";
+  const trilha = params.trilha === "REDUZIDA" ? "REDUZIDA" : "BASE";
 
   const [projects, stages] = await Promise.all([
     db.project.findMany({
-      where: { deleted: false, productLine: funil, status: { not: "CANCELADO" } },
+      where: { deleted: false, productLine: funil, trilha, status: { not: "CANCELADO" } },
       include: {
         client: true,
         consultant: true,
@@ -34,7 +35,7 @@ export default async function FunilPage({
       },
       orderBy: { stageEnteredAt: "asc" },
     }),
-    loadStages(),
+    loadStages(trilha),
   ]);
 
   const accent = funil === "TECFOOD" ? "border-t-tecfood" : "border-t-retail";
@@ -74,22 +75,38 @@ export default async function FunilPage({
               : "Clique em um card para abrir o projeto."}
           </p>
         </div>
-        <div className="flex rounded-lg border border-border bg-card p-1 gap-1">
-          {(["TECFOOD", "RETAIL"] as const).map((f) => (
-            <Link
-              key={f}
-              href={`/funil?funil=${f}`}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                funil === f
-                  ? f === "TECFOOD"
-                    ? "bg-tecfood text-white"
-                    : "bg-retail text-white"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {f === "TECFOOD" ? "TecFood" : "Retail"}
-            </Link>
-          ))}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex rounded-lg border border-border bg-card p-1 gap-1">
+            {(["TECFOOD", "RETAIL"] as const).map((f) => (
+              <Link
+                key={f}
+                href={`/funil?funil=${f}&trilha=${trilha}`}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  funil === f
+                    ? f === "TECFOOD"
+                      ? "bg-tecfood text-white"
+                      : "bg-retail text-white"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {f === "TECFOOD" ? "TecFood" : "Retail"}
+              </Link>
+            ))}
+          </div>
+          {/* Trilha: Base (cliente novo) x Reduzida (upsell de módulo novo) */}
+          <div className="flex rounded-lg border border-border bg-card p-1 gap-1">
+            {(["BASE", "REDUZIDA"] as const).map((t) => (
+              <Link
+                key={t}
+                href={`/funil?funil=${funil}&trilha=${t}`}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  trilha === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t === "BASE" ? "Base" : "Reduzida"}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -97,7 +114,7 @@ export default async function FunilPage({
         etapas={stages.map((s) => ({ id: s.id, nome: s.nome, ordem: s.ordem }))}
         cards={cards}
         accent={accent}
-        voltarPara={`/funil?funil=${funil}`}
+        voltarPara={`/funil?funil=${funil}&trilha=${trilha}`}
       />
     </div>
   );
