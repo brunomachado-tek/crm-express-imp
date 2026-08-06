@@ -93,16 +93,38 @@ async function main() {
     { key: "CS_ATIVO", nome: "CS ativo", isFinal: true },
   ];
   const stage = {};
-  if ((await prisma.pipelineStage.count()) === 0) {
+  if ((await prisma.pipelineStage.count({ where: { trilha: "BASE" } })) === 0) {
     for (let i = 0; i < pipeline.length; i++) {
       const s = pipeline[i];
       stage[s.key] = await prisma.pipelineStage.create({
-        data: { nome: s.nome, ordem: i, idealDays: s.idealDays ?? null, isFinal: !!s.isFinal },
+        data: { nome: s.nome, ordem: i, idealDays: s.idealDays ?? null, isFinal: !!s.isFinal, trilha: "BASE" },
       });
     }
   } else {
-    const all = await prisma.pipelineStage.findMany();
+    const all = await prisma.pipelineStage.findMany({ where: { trilha: "BASE" } });
     for (const s of pipeline) stage[s.key] = all.find((x) => x.nome === s.nome);
+  }
+
+  // Etapas da trilha REDUZIDA (upsell de cliente existente): as mesmas da Base,
+  // com a validação comercial colapsada em "Validação comercial CS". Sem checklist.
+  const reduzidas = [
+    { nome: "Contrato assinado", idealDays: 3 },
+    { nome: "Validação comercial CS", idealDays: 5 },
+    { nome: "Alocado", idealDays: 3 },
+    { nome: "Cronograma", idealDays: 7 },
+    { nome: "Implantação", idealDays: 45 },
+    { nome: "Go-live", idealDays: 7 },
+    { nome: "Acompanhamento", idealDays: 15 },
+    { nome: "Finalizado", idealDays: 5, isFinal: true },
+    { nome: "CS ativo", isFinal: true },
+  ];
+  if ((await prisma.pipelineStage.count({ where: { trilha: "REDUZIDA" } })) === 0) {
+    for (let i = 0; i < reduzidas.length; i++) {
+      const s = reduzidas[i];
+      await prisma.pipelineStage.create({
+        data: { nome: s.nome, ordem: i, idealDays: s.idealDays ?? null, isFinal: !!s.isFinal, trilha: "REDUZIDA" },
+      });
+    }
   }
 
   // ── Checklist por etapa (o que precisa estar feito para mover o card) ──

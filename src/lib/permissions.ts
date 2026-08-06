@@ -7,7 +7,7 @@ import type { ProductLine, Project, Role, User } from "@prisma/client";
 // chama a função correspondente e recusa a operação no servidor.
 
 type SessionUser = Pick<User, "id" | "role" | "productLine">;
-type ProjectScope = Pick<Project, "consultantId" | "productLine">;
+type ProjectScope = Pick<Project, "consultantId" | "productLine" | "trilha">;
 
 function sameProductOrDiretoria(user: SessionUser, productLine: ProductLine) {
   if (user.role === "DIRETORIA") return true;
@@ -60,10 +60,12 @@ export function canUploadDocuments(user: SessionUser, project: ProjectScope) {
   return canManageActivities(user, project);
 }
 
-// Mover o projeto de etapa e marcar o checklist da etapa. É a operação central
-// da implantação, então segue a mesma regra do cronograma: quem executa o
-// trabalho move o card. CS acompanha, mas não movimenta.
+// Mover o projeto de etapa e marcar o checklist da etapa. Segue a regra do
+// cronograma (quem executa o trabalho move o card) MAIS o CS na trilha Reduzida:
+// no upsell é o CS quem faz a "Validação comercial CS" e conduz a implantação
+// menor. Cada movimentação já vira log (StageTransition com autor, na timeline).
 export function canMoveStage(user: SessionUser, project: ProjectScope) {
+  if (project.trilha === "REDUZIDA" && user.role === "CS") return true;
   return canManageActivities(user, project);
 }
 

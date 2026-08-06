@@ -359,13 +359,23 @@ model DelayCategory {
 // ─── Pipeline (etapas do funil, editáveis) ───────────────────────────
 // As etapas deixaram de ser um enum fixo: a diretoria pode criar, renomear,
 // reordenar, apagar e definir o prazo (SLA) de cada etapa em /pipeline.
+
+// Trilha de implantação: BASE = cliente novo (fluxo completo); REDUZIDA = upsell
+// de cliente existente (novo módulo, implantação mais curta). Cada etapa e cada
+// projeto pertence a uma trilha; o funil e o stepper filtram por ela.
+enum TrilhaImplantacao {
+  BASE
+  REDUZIDA
+}
+
 model PipelineStage {
-  id        String   @id @default(cuid())
+  id        String            @id @default(cuid())
   nome      String
   ordem     Int
   idealDays Int? // prazo ideal (SLA) em dias corridos; null = sem prazo
-  isFinal   Boolean  @default(false) // etapa terminal: conta como projeto concluído
-  createdAt DateTime @default(now())
+  isFinal   Boolean           @default(false) // etapa terminal: conta como projeto concluído
+  trilha    TrilhaImplantacao @default(BASE)
+  createdAt DateTime          @default(now())
 
   projects           Project[]
   checklistTemplates StageChecklistTemplate[]
@@ -388,6 +398,7 @@ model Project {
   clientId       String
   client         Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
   productLine    ProductLine
+  trilha         TrilhaImplantacao @default(BASE) // BASE = cliente novo; REDUZIDA = upsell
   nome           String? // ex.: "Implantação TecFood Express" (default por produto)
   stageId        String
   stage          PipelineStage @relation(fields: [stageId], references: [id])
