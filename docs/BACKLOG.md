@@ -50,12 +50,19 @@ observação notifica o mencionado, com **autocomplete** de nomes.
   - Schema: `DelayJustification.dias/status/approvedById/approvedAt` + enum `DelayStatus`.
   - 🔨 buildado, no ar no imp2. ⏳ verificação funcional do Bruno pendente.
 
-- ⏳ **PDF de acompanhamento — depois.** Decisões:
-  - Conteúdo: **nome do grupo (módulo) + todas as atividades**, **consultor que
-    entregou**, **envolvidos**, **data da entrega**, **resumo da atividade**.
-  - **Layout bonito**, **logo Teknisa**, dentro da identidade visual do sistema
-    (usar skills de design). **1 PDF por projeto**, regerável a cada alteração
-    (gera novo e envia ao cliente).
+- ✅ **PDF de acompanhamento — FEITO (2026-08-06).**
+  - Página `/acompanhamento/[projetoId]` (fora do grupo `(app)`, layout limpo p/
+    impressão), com logo Teknisa, fontes de marca (Poppins/Roboto) e cores exatas.
+    Botão "Baixar PDF" aciona o "Salvar como PDF" do navegador (regras de impressão
+    no `@media print` do `globals.css`: A4, cores fiéis, sem cortar item no meio).
+  - Conteúdo: nome do grupo (fase/módulo) + todas as atividades, com resumo
+    (descrição), responsável pela entrega (assignee ou consultor), envolvidos e data
+    (entregue/previsto conforme status). Cabeçalho com cliente, CNPJ, cidade/UF,
+    consultor, etapa, contrato LUSO e assinatura, mais contador de concluídas.
+  - Link "PDF de acompanhamento" no topo da página do projeto (abre em nova aba).
+    Regerável a cada alteração (gera on demand, sempre atual).
+  - Decisão de abordagem: página de impressão em vez de `@react-pdf/renderer`, para
+    ter as fontes e o logo reais da marca sem empacotar TTF nem redesenhar o logo.
 
 **Outros:** slot do Check List no wizard de cadastro — FEITO. "Salvar único" do
 pipeline — adiado (ver `ROADMAP-100.md` seção 1).

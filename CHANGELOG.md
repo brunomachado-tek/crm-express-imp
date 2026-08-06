@@ -8,6 +8,25 @@ vocabulário honesto: ✅ no ar · 🔨 construído, não entregue · 🌿 só e
 
 ---
 
+## 2026-08-06 — Onda 4 item 3: PDF de acompanhamento do cliente (layout Teknisa)
+
+- Nova página `/acompanhamento/[projetoId]`, **fora do grupo `(app)`** (sem barra
+  lateral, layout limpo para impressão), autenticada por `requireUser`. Botão
+  **"Baixar PDF"** aciona `window.print()`; o usuário salva como PDF para enviar ao
+  cliente. Regras de impressão no `@media print` do `globals.css` (A4, cores fiéis
+  com `print-color-adjust`, `break-inside: avoid` nos grupos e itens).
+- **Identidade Teknisa real:** logo SVG, fontes de marca (Poppins/Roboto já
+  carregadas via `next/font`), cores do `@theme`. Motivo de não usar
+  `@react-pdf/renderer`: precisaria empacotar os TTF das fontes e redesenhar o logo
+  path a path, arriscando o resultado genérico.
+- Conteúdo (decisão do Bruno): grupos por fase/módulo com todas as atividades,
+  resumo (descrição), responsável pela entrega, envolvidos e data (entregue/previsto
+  conforme status). Cabeçalho com cliente, CNPJ, cidade/UF, consultor, etapa,
+  contrato LUSO, assinatura e contador de concluídas. Link no topo da página do
+  projeto. Gera on demand (sempre atual), 1 por projeto.
+- Status: 🔨 buildado (tsc + next build limpos), verificado o layout num mock fiel
+  renderizado. ⏳ verificação na URL viva pendente (Bruno).
+
 ## 2026-08-06 — Onda 4 item 1: justificativa de atraso com aprovação que desconta do SLA
 
 - **Fluxo novo:** ao justificar atraso, o consultor informa **dias de atraso** +

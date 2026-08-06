@@ -46,3 +46,26 @@ h3 {
     transform: translateX(300%);
   }
 }
+
+/* Impressão do documento de acompanhamento do cliente (/acompanhamento/[id]).
+   O navegador gera o PDF pelo "Salvar como PDF". */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  /* garante que as cores da marca (chips, réguas, logo) saiam no papel */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* não corta um grupo nem uma atividade no meio da página */
+  .ac-grupo,
+  .ac-item {
+    break-inside: avoid;
+  }
+}
+
+@page {
+  size: A4;
+  margin: 14mm;
+}
