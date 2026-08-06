@@ -38,14 +38,17 @@ observação notifica o mencionado, com **autocomplete** de nomes.
   de cada um), com filtro por consultor para coordenação/diretoria; consultor vê só
   os seus. KPIs: projetada (ativos) e a receber (entregues).
 
-- ⏳ **Justificativa descontar SLA + aprovação — PRÓXIMO (amanhã).** Decisões:
-  - Categorias que justificam/pausam: **Pendência do cliente, Escopo adicional,
-    Problema técnico, Produto**.
-  - **Aprovação do coordenador**: ao criar a justificativa, chega **alerta para o
-    coordenador** com **✓ aprovar / ✗ negar**. Só aprovada desconta do SLA.
-  - No form de criar justificativa, **selecionar o tempo de atraso** (dias).
-  - O tempo aprovado **desconta do prazo total** da implantação (SLA).
-  - (Já existem `DelayJustification`, `DelayCategory`, `ProjectPause` para construir em cima.)
+- ✅ **Justificativa descontar SLA + aprovação — FEITO (2026-08-06).**
+  - Consultor informa **dias** + categoria + detalhe; nasce PENDENTE e alerta a
+    **coordenação do produto**. Coordenador aprova/nega no card (✓/✗), consultor nunca
+    aprova a própria (`canApproveDelay`).
+  - Só **aprovada** desconta, e dos **dois relógios**: SLA da etapa (`slaFor`) e marco
+    contratual do treinamento (`contractMilestones`). Aplicado no dashboard, funil,
+    ficha do cliente e projeto.
+  - Categorias fixadas: **Pendência do cliente, Escopo adicional, Problema técnico,
+    Produto** (seed reativa as 4, desativa antigas). Ranking do dashboard ignora negadas.
+  - Schema: `DelayJustification.dias/status/approvedById/approvedAt` + enum `DelayStatus`.
+  - 🔨 buildado, no ar no imp2. ⏳ verificação funcional do Bruno pendente.
 
 - ⏳ **PDF de acompanhamento — depois.** Decisões:
   - Conteúdo: **nome do grupo (módulo) + todas as atividades**, **consultor que

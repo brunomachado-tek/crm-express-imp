@@ -8,6 +8,26 @@ vocabulário honesto: ✅ no ar · 🔨 construído, não entregue · 🌿 só e
 
 ---
 
+## 2026-08-06 — Onda 4 item 1: justificativa de atraso com aprovação que desconta do SLA
+
+- **Fluxo novo:** ao justificar atraso, o consultor informa **dias de atraso** +
+  categoria + detalhe. A justificativa nasce **PENDENTE** e dispara **alerta para a
+  coordenação do produto** (diretoria não recebe; sem coordenador ativo, vira
+  broadcast). O coordenador decide no card do projeto com **✓ Aprovar / ✗ Negar**.
+- **Só aprovada desconta**, e desconta dos **dois relógios**: o SLA da etapa
+  (`slaFor`, como uma pausa autorizada) **e** o marco contratual do treinamento
+  (`contractMilestones`, estica a janela). Threaded em todos os call sites que marcam
+  "atrasado": dashboard, funil, ficha do cliente, página do projeto.
+- **Anti-burla:** `canApproveDelay` = coordenação do produto + diretoria, nunca o
+  consultor. Decisão é final e vira notificação para quem registrou.
+- Schema: `DelayJustification` ganhou `dias`, `status` (enum `DelayStatus`),
+  `approvedById`/`approvedAt`. Aditivo, seguro no `db push`.
+- Categorias fixadas na decisão do Bruno: **Pendência do cliente, Escopo adicional,
+  Problema técnico, Produto**. Seed reativa essas 4 e desativa as antigas sem apagar
+  histórico. Ranking de motivos do dashboard ignora as **negadas**.
+- Status: 🔨 buildado (tsc + next build limpos) e no ar no imp2 (site saudável pós
+  db push). ⏳ verificação funcional pendente (Bruno, na URL viva).
+
 ## 2026-08-03 — Acesso: senha da diretoria, criar usuário direto, trocar senha
 
 - **Login da diretoria destravado:** o seed passa a garantir a senha inicial
