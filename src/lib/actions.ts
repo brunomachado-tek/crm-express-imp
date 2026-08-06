@@ -555,7 +555,7 @@ async function exigeAcessoAoCliente(clientId: string) {
   const user = await requireUser();
   const projects = await db.project.findMany({
     where: { clientId, deleted: false },
-    select: { consultantId: true, productLine: true },
+    select: { consultantId: true, productLine: true, trilha: true },
   });
   if (!canEditClient(user, projects)) {
     redirect(`/clientes/${clientId}?erro=permissao`);
@@ -671,7 +671,7 @@ export async function deleteContactAction(formData: FormData) {
 async function projetosDoCliente(clientId: string) {
   return db.project.findMany({
     where: { clientId },
-    select: { id: true, consultantId: true, productLine: true },
+    select: { id: true, consultantId: true, productLine: true, trilha: true },
   });
 }
 
@@ -1016,6 +1016,11 @@ export async function createClientProject(formData: FormData) {
     redirect("/clientes/novo?erro=permissao-produto");
   }
 
+  // "É cliente Teknisa" = upsell de módulo novo: vai para a trilha reduzida, sem
+  // plano de projeto e sem checklist, e reaproveita o cliente se o CNPJ já existir.
+  const ehCliente = String(formData.get("ehClienteTeknisa") ?? "") === "1";
+  const trilha = ehCliente ? "REDUZIDA" : "BASE";
+
   const razaoSocial = String(formData.get("razaoSocial") ?? "").trim();
   if (!razaoSocial) redirect("/clientes/novo?erro=razao-social");
 
@@ -1036,7 +1041,8 @@ export async function createClientProject(formData: FormData) {
   // O plano de projeto é opcional. Quando vem, é relido no servidor: dá os
   // contatos (usuário-chave e coordenador do cliente), a previsão de início e
   // término e reforça a proposta. O PDF fica anexado ao projeto.
-  const pdfPlano = formData.get("plano");
+  // No upsell (trilha reduzida) não há plano de projeto: só o contrato.
+  const pdfPlano = ehCliente ? null : formData.get("plano");
   const temPlano = pdfPlano instanceof File && pdfPlano.size > 0;
   let plano: LeituraPlano | null = null;
   if (temPlano) {
@@ -1046,11 +1052,16 @@ export async function createClientProject(formData: FormData) {
   }
 
   const cnpj = String(formData.get("cnpj") ?? "").trim() || null;
-  // CNPJ é único: sem esta conferência, cadastrar um cliente que já existe
-  // devolve uma tela de erro do banco em vez de uma explicação.
+  // CNPJ é único. No cadastro normal, um cliente que já existe vira aviso (não
+  // duplica). No upsell ("É cliente Teknisa"), o CNPJ existente é o esperado:
+  // reaproveita o cliente e cria só um novo projeto ligado a ele.
+  let clienteExistenteId = null;
   if (cnpj) {
     const jaExiste = await db.client.findUnique({ where: { cnpj } });
-    if (jaExiste) redirect(`/clientes/novo?erro=cnpj-duplicado&cliente=${jaExiste.id}`);
+    if (jaExiste) {
+      if (ehCliente) clienteExistenteId = jaExiste.id;
+      else redirect(`/clientes/novo?erro=cnpj-duplicado&cliente=${jaExiste.id}`);
+    }
   }
 
   // Com contrato lido, valem os números do documento (o par SAAS + LUSO).
@@ -1078,22 +1089,25 @@ export async function createClientProject(formData: FormData) {
         ).map((m) => m.id)
       : [];
 
-  const inicial = await firstStage();
+  const inicial = await firstStage(trilha);
   if (!inicial) throw new Error("Nenhuma etapa de pipeline configurada.");
 
-  const client = await db.client.create({
-    data: {
-      razaoSocial,
-      cnpj,
-      endereco: String(formData.get("endereco") ?? "").trim() || null,
-      cep: String(formData.get("cep") ?? "").trim() || null,
-      cidade: String(formData.get("cidade") ?? "").trim() || null,
-      uf: String(formData.get("uf") ?? "").trim().toUpperCase() || null,
-      // proposta: forma do campo, ou o que veio do plano de projeto
-      propostaNumero:
-        String(formData.get("propostaNumero") ?? "").trim() || plano?.propostaNumero || null,
-    },
-  });
+  // Upsell reaproveita o cliente existente; caso contrário, cria o cadastro.
+  const client = clienteExistenteId
+    ? await db.client.findUniqueOrThrow({ where: { id: clienteExistenteId } })
+    : await db.client.create({
+        data: {
+          razaoSocial,
+          cnpj,
+          endereco: String(formData.get("endereco") ?? "").trim() || null,
+          cep: String(formData.get("cep") ?? "").trim() || null,
+          cidade: String(formData.get("cidade") ?? "").trim() || null,
+          uf: String(formData.get("uf") ?? "").trim().toUpperCase() || null,
+          // proposta: forma do campo, ou o que veio do plano de projeto
+          propostaNumero:
+            String(formData.get("propostaNumero") ?? "").trim() || plano?.propostaNumero || null,
+        },
+      });
 
   const dataContrato = dataOuNull(formData.get("dataAssinatura"));
 
@@ -1101,6 +1115,7 @@ export async function createClientProject(formData: FormData) {
     data: {
       clientId: client.id,
       productLine,
+      trilha,
       nome: `Implantação ${productLine === "TECFOOD" ? "TecFood" : "Retail"} Express`,
       dataContrato,
       // previsão de início e término vêm do plano de projeto, quando houver
@@ -1235,7 +1250,8 @@ export async function createClientProject(formData: FormData) {
   // Cronograma: atividades dos módulos contratados + da moldura fixa.
   await gerarCronogramaProjeto(project.id, productLine, moduleIds);
 
-  await instantiateChecklist(project.id, inicial.id);
+  // A trilha reduzida (upsell) não tem checklist por etapa.
+  if (!ehCliente) await instantiateChecklist(project.id, inicial.id);
   await db.stageTransition.create({
     data: { projectId: project.id, toStageId: inicial.id, byUserId: user.id },
   });
@@ -1329,13 +1345,15 @@ export async function moveStage(formData: FormData) {
   const projectId = String(formData.get("projectId"));
   const toStageId = String(formData.get("toStageId"));
 
-  const [project, stages] = await Promise.all([
-    db.project.findUniqueOrThrow({
-      where: { id: projectId },
-      include: { checklist: true, client: true },
-    }),
-    db.pipelineStage.findMany({ orderBy: { ordem: "asc" } }),
-  ]);
+  const project = await db.project.findUniqueOrThrow({
+    where: { id: projectId },
+    include: { checklist: true, client: true },
+  });
+  // Etapas da trilha do projeto: a ordem de avanço é dentro da trilha.
+  const stages = await db.pipelineStage.findMany({
+    where: { trilha: project.trilha },
+    orderBy: { ordem: "asc" },
+  });
 
   if (!canMoveStage(user, project)) {
     redirect(`/projetos/${projectId}?erro=permissao`);
@@ -2419,15 +2437,22 @@ export async function removeChecklistTemplate(formData: FormData) {
   redirect("/pipeline?ok=checklist-del");
 }
 
+// Trilha (BASE/REDUZIDA) escolhida no editor de pipeline. O CRUD de etapas opera
+// dentro da trilha, e o redirect a preserva para a pessoa continuar editando nela.
+function trilhaDoForm(formData: FormData): "BASE" | "REDUZIDA" {
+  return String(formData.get("trilha") ?? "BASE") === "REDUZIDA" ? "REDUZIDA" : "BASE";
+}
+
 export async function addPipelineStage(formData: FormData) {
   const user = await requireUser();
   if (!canEditPipeline(user)) redirect("/pipeline?erro=permissao");
 
+  const trilha = trilhaDoForm(formData);
   const nome = String(formData.get("nome") ?? "").trim() || "Nova etapa";
   const refId = String(formData.get("refId") ?? "").trim() || null;
   const lado = String(formData.get("lado") ?? "right"); // "left" | "right"
 
-  const stages = await db.pipelineStage.findMany({ orderBy: { ordem: "asc" } });
+  const stages = await db.pipelineStage.findMany({ where: { trilha }, orderBy: { ordem: "asc" } });
   const ref = refId ? stages.find((s) => s.id === refId) : null;
   // posição de inserção no array ordenado
   let pos = stages.length;
@@ -2438,12 +2463,12 @@ export async function addPipelineStage(formData: FormData) {
     for (let i = stages.length - 1; i >= pos; i--) {
       await tx.pipelineStage.update({ where: { id: stages[i].id }, data: { ordem: i + 1 } });
     }
-    await tx.pipelineStage.create({ data: { nome, ordem: pos } });
+    await tx.pipelineStage.create({ data: { nome, ordem: pos, trilha } });
   });
 
   revalidatePath("/pipeline");
   revalidatePath("/", "layout");
-  redirect("/pipeline?ok=etapa-criada");
+  redirect(`/pipeline?trilha=${trilha}&ok=etapa-criada`);
 }
 
 // Salva nome, prazo ideal (SLA) e flag de etapa final de uma vez.
@@ -2462,7 +2487,7 @@ export async function savePipelineStage(formData: FormData) {
   });
   revalidatePath("/pipeline");
   revalidatePath("/", "layout");
-  redirect("/pipeline?ok=etapa");
+  redirect(`/pipeline?trilha=${trilhaDoForm(formData)}&ok=etapa`);
 }
 
 // Prazo da transição de uma etapa para a próxima: fica no `idealDays` da etapa
@@ -2477,7 +2502,7 @@ export async function savePipelineTransicao(formData: FormData) {
   await db.pipelineStage.update({ where: { id }, data: { idealDays } });
   revalidatePath("/pipeline");
   revalidatePath("/", "layout");
-  redirect("/pipeline?ok=prazo");
+  redirect(`/pipeline?trilha=${trilhaDoForm(formData)}&ok=prazo`);
 }
 
 // Reordena uma etapa para a esquerda ou direita, trocando com a vizinha.
@@ -2486,11 +2511,12 @@ export async function movePipelineStage(formData: FormData) {
   if (!canEditPipeline(user)) redirect("/pipeline?erro=permissao");
   const id = String(formData.get("stageId"));
   const dir = String(formData.get("dir")); // "left" | "right"
+  const trilha = trilhaDoForm(formData);
 
-  const stages = await db.pipelineStage.findMany({ orderBy: { ordem: "asc" } });
+  const stages = await db.pipelineStage.findMany({ where: { trilha }, orderBy: { ordem: "asc" } });
   const i = stages.findIndex((s) => s.id === id);
   const j = dir === "left" ? i - 1 : i + 1;
-  if (i < 0 || j < 0 || j >= stages.length) redirect("/pipeline");
+  if (i < 0 || j < 0 || j >= stages.length) redirect(`/pipeline?trilha=${trilha}`);
 
   await db.$transaction([
     db.pipelineStage.update({ where: { id: stages[i].id }, data: { ordem: stages[j].ordem } }),
@@ -2498,7 +2524,7 @@ export async function movePipelineStage(formData: FormData) {
   ]);
   revalidatePath("/pipeline");
   revalidatePath("/", "layout");
-  redirect("/pipeline?ok=etapa-movida");
+  redirect(`/pipeline?trilha=${trilha}&ok=etapa-movida`);
 }
 
 // Apaga uma etapa. Projetos que estiverem nela são movidos para a etapa
@@ -2508,11 +2534,12 @@ export async function deletePipelineStage(formData: FormData) {
   const user = await requireUser();
   if (!canEditPipeline(user)) redirect("/pipeline?erro=permissao");
   const id = String(formData.get("stageId"));
+  const trilha = trilhaDoForm(formData);
 
-  const stages = await db.pipelineStage.findMany({ orderBy: { ordem: "asc" } });
-  if (stages.length <= 1) redirect("/pipeline?erro=ultima");
+  const stages = await db.pipelineStage.findMany({ where: { trilha }, orderBy: { ordem: "asc" } });
+  if (stages.length <= 1) redirect(`/pipeline?trilha=${trilha}&erro=ultima`);
   const i = stages.findIndex((s) => s.id === id);
-  if (i < 0) redirect("/pipeline");
+  if (i < 0) redirect(`/pipeline?trilha=${trilha}`);
   const vizinha = stages[i - 1] ?? stages[i + 1];
 
   await db.$transaction(async (tx) => {
@@ -2520,8 +2547,8 @@ export async function deletePipelineStage(formData: FormData) {
     await tx.project.updateMany({ where: { stageId: id }, data: { stageId: vizinha.id } });
     // remove o registro (checklist/atrasos/transições dessa etapa caem por cascade/setnull)
     await tx.pipelineStage.delete({ where: { id } });
-    // renumera para manter a ordem contígua
-    const restantes = await tx.pipelineStage.findMany({ orderBy: { ordem: "asc" } });
+    // renumera para manter a ordem contígua, dentro da trilha
+    const restantes = await tx.pipelineStage.findMany({ where: { trilha }, orderBy: { ordem: "asc" } });
     for (let k = 0; k < restantes.length; k++) {
       if (restantes[k].ordem !== k) {
         await tx.pipelineStage.update({ where: { id: restantes[k].id }, data: { ordem: k } });
@@ -2531,5 +2558,5 @@ export async function deletePipelineStage(formData: FormData) {
 
   revalidatePath("/pipeline");
   revalidatePath("/", "layout");
-  redirect("/pipeline?ok=etapa-removida");
+  redirect(`/pipeline?trilha=${trilha}&ok=etapa-removida`);
 }
