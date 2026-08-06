@@ -17,6 +17,7 @@ import {
   Workflow,
   Settings,
   ListChecks,
+  Coins,
 } from "lucide-react";
 
 // Limite superior (exclusivo) da semana atual = próxima segunda 00:00 UTC. Fica
@@ -59,6 +60,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     { href: "/funil", label: "Funil", icon: KanbanSquare },
     { href: "/clientes", label: "Clientes", icon: Building2 },
     { href: "/equipe", label: "Equipe", icon: Users },
+    ...(user.role !== "CS" ? [{ href: "/comissao", label: "Comissão", icon: Coins }] : []),
     ...(user.role === "DIRETORIA" ? [{ href: "/pipeline", label: "Pipeline", icon: Workflow }] : []),
     { href: "/alertas", label: "Alertas", icon: Bell, badge: unread },
     { href: "/config", label: "Configurações", icon: Settings },
