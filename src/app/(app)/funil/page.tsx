@@ -6,6 +6,7 @@ import { loadStages } from "@/lib/pipeline";
 import { FunilBoard, type CardBoard } from "@/components/funil/funil-board";
 import { canMoveStage } from "@/lib/permissions";
 import { TRILHA_LABELS } from "@/lib/format";
+import { Check } from "lucide-react";
 import type { ProductLine } from "@prisma/client";
 
 export default async function FunilPage({
@@ -64,7 +65,7 @@ export default async function FunilPage({
 
   return (
     <div className="space-y-4 h-full flex flex-col">
-      <div className="space-y-3">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold">Funil de implantação</h1>
           <p className="text-sm text-muted-foreground">
@@ -77,9 +78,9 @@ export default async function FunilPage({
           </p>
         </div>
 
-        {/* Barra de filtros. Hierarquia: primeiro o serviço (color-coded, chama o
-            olho), depois o tipo de cliente (neutro, secundário). */}
-        <div className="flex items-end gap-4 flex-wrap">
+        {/* Layout da variante A (rótulos + divisor), na extrema direita. O ✓
+            marca a opção ativa. Serviço color-coded, tipo de cliente neutro. */}
+        <div className="flex items-end gap-4">
           <div className="flex flex-col gap-1.5">
             <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               Serviço
@@ -89,7 +90,7 @@ export default async function FunilPage({
                 <Link
                   key={f}
                   href={`/funil?funil=${f}&trilha=${trilha}`}
-                  className={`px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     funil === f
                       ? f === "TECFOOD"
                         ? "bg-tecfood text-white"
@@ -97,6 +98,7 @@ export default async function FunilPage({
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
+                  {funil === f && <Check className="h-3.5 w-3.5" />}
                   {f === "TECFOOD" ? "TecFood" : "Retail"}
                 </Link>
               ))}
@@ -114,12 +116,13 @@ export default async function FunilPage({
                 <Link
                   key={t}
                   href={`/funil?funil=${funil}&trilha=${t}`}
-                  className={`px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     trilha === t
                       ? "bg-card text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
+                  {trilha === t && <Check className="h-3.5 w-3.5" />}
                   {TRILHA_LABELS[t]}
                 </Link>
               ))}

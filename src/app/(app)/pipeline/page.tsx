@@ -15,6 +15,7 @@ import {
 import { SubmitButton } from "@/components/ui/submit-button";
 import {
   ArrowDown,
+  Check,
   ChevronDown,
   ChevronUp,
   Flag,
@@ -108,12 +109,13 @@ export default async function PipelinePage({
             <Link
               key={t}
               href={`/pipeline?trilha=${t}`}
-              className={`px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 trilha === t
                   ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
+              {trilha === t && <Check className="h-3.5 w-3.5" />}
               {TRILHA_LABELS[t]}
             </Link>
           ))}
