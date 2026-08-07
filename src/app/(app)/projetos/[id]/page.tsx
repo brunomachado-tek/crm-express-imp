@@ -89,7 +89,27 @@ export default async function ProjetoPage({
   });
   if (!project || project.deleted) notFound();
 
-  const stages = await loadStages(project.trilha);
+  // Consultas independentes em paralelo: no banco remoto, o que era uma fila de
+  // idas e voltas vira uma só rodada. (stages, consultores do produto, time
+  // inteiro para o @menção, categorias de atraso, modelos de atividade.)
+  const [stages, consultants, equipe, delayCategories, modelosAtividade] = await Promise.all([
+    loadStages(project.trilha),
+    db.user.findMany({
+      where: { role: "CONSULTOR", active: true, status: "APROVADO", productLine: project.productLine },
+      orderBy: { name: "asc" },
+    }),
+    db.user.findMany({
+      where: { active: true, status: "APROVADO" },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    db.delayCategory.findMany({ where: { active: true } }),
+    db.activityTemplate.findMany({
+      where: { active: true, productLine: project.productLine },
+      orderBy: [{ ordem: "asc" }, { titulo: "asc" }],
+    }),
+  ]);
+
   // Dias de atraso aprovados esticam os dois relógios: o da etapa conta só as
   // justificativas da etapa atual; o marco contratual (prazo total) soma tudo.
   const descontoEtapa = somaDescontoAprovado(project.delays, project.stageId);
@@ -98,22 +118,6 @@ export default async function ProjetoPage({
   const milestones = contractMilestones(project, undefined, descontoTotal);
   const currentChecklist = project.checklist.filter((c) => c.stageId === project.stageId);
   const checklistDone = currentChecklist.every((c) => c.done);
-  const consultants = await db.user.findMany({
-    where: { role: "CONSULTOR", active: true, status: "APROVADO", productLine: project.productLine },
-    orderBy: { name: "asc" },
-  });
-  // Time inteiro (para o autocomplete de @menção na observação).
-  const equipe = await db.user.findMany({
-    where: { active: true, status: "APROVADO" },
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
-  });
-  const delayCategories = await db.delayCategory.findMany({ where: { active: true } });
-  // Modelos de atividade do produto, para o consultor não digitar do zero.
-  const modelosAtividade = await db.activityTemplate.findMany({
-    where: { active: true, productLine: project.productLine },
-    orderBy: [{ ordem: "asc" }, { titulo: "asc" }],
-  });
   // A mesma atividade aparece em mais de um módulo (ex.: "Medição de Efetivos"),
   // então a sugestão de título não pode repetir (senão key duplicada no React).
   const titulosUnicos = [...new Set(modelosAtividade.map((m) => m.titulo))];

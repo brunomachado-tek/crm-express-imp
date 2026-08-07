@@ -28,24 +28,27 @@ export default async function ClientesPage({
       ]
     : undefined;
 
-  const clients = await db.client.findMany({
-    where: {
-      // arquivados só aparecem quando pedidos de propósito
-      deletedAt: verArquivados ? { not: null } : null,
-      ...(busca ? { OR: busca } : {}),
-    },
-    include: {
-      projects: {
-        where: { deleted: verArquivados ? undefined : false },
-        orderBy: { createdAt: "desc" },
-        include: { stage: true },
+  // Lista e contagem de arquivados são independentes: buscam em paralelo.
+  const [clients, totalArquivados] = await Promise.all([
+    db.client.findMany({
+      where: {
+        // arquivados só aparecem quando pedidos de propósito
+        deletedAt: verArquivados ? { not: null } : null,
+        ...(busca ? { OR: busca } : {}),
       },
-      contracts: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      include: {
+        projects: {
+          where: { deleted: verArquivados ? undefined : false },
+          orderBy: { createdAt: "desc" },
+          include: { stage: true },
+        },
+        contracts: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    db.client.count({ where: { deletedAt: { not: null } } }),
+  ]);
   const canHardDelete = canHardDeleteClient(user);
-  const totalArquivados = await db.client.count({ where: { deletedAt: { not: null } } });
 
   return (
     <div className="space-y-6 max-w-5xl">

@@ -1289,9 +1289,12 @@ async function gerarCronogramaProjeto(
     where: { productLine, grupo: "FIXO", active: true },
     select: { id: true },
   });
-  // vincula ao projeto só os módulos contratados (a moldura fixa não vira card)
-  for (const moduleTemplateId of moduleIdsContratados) {
-    await db.projectModule.create({ data: { projectId, moduleTemplateId } });
+  // vincula ao projeto só os módulos contratados (a moldura fixa não vira card).
+  // createMany: uma ida ao banco em vez de uma por módulo (latência no remoto).
+  if (moduleIdsContratados.length > 0) {
+    await db.projectModule.createMany({
+      data: moduleIdsContratados.map((moduleTemplateId) => ({ projectId, moduleTemplateId })),
+    });
   }
   const ids = [...new Set([...fixos.map((m) => m.id), ...moduleIdsContratados])];
   if (ids.length === 0) return;
@@ -1304,26 +1307,28 @@ async function gerarCronogramaProjeto(
     (a, b) => (a.moduleTemplate?.ordem ?? 0) - (b.moduleTemplate?.ordem ?? 0) || a.ordem - b.ordem
   );
 
+  // Monta todas as atividades e grava de uma vez (createMany), em vez de um
+  // insert por atividade (eram dezenas de idas ao banco no cadastro).
   const seen = new Set<string>();
   let ordem = 0;
+  const atividades = [];
   for (const t of templates) {
     if (t.dedupKey && seen.has(t.dedupKey)) continue;
     if (t.dedupKey) seen.add(t.dedupKey);
-    await db.projectActivity.create({
-      data: {
-        projectId,
-        templateId: t.id,
-        titulo: t.titulo,
-        descricao: t.descricao,
-        horas: t.horas,
-        numReunioes: t.numReunioes,
-        responsavel: t.responsavel,
-        pautas: t.pautas,
-        envolvidosCliente: t.envolvidosCliente,
-        ordem: ordem++,
-      },
+    atividades.push({
+      projectId,
+      templateId: t.id,
+      titulo: t.titulo,
+      descricao: t.descricao,
+      horas: t.horas,
+      numReunioes: t.numReunioes,
+      responsavel: t.responsavel,
+      pautas: t.pautas,
+      envolvidosCliente: t.envolvidosCliente,
+      ordem: ordem++,
     });
   }
+  if (atividades.length > 0) await db.projectActivity.createMany({ data: atividades });
 }
 
 async function instantiateChecklist(projectId: string, stageId: string) {
@@ -1333,11 +1338,10 @@ async function instantiateChecklist(projectId: string, stageId: string) {
     where: { stageId, active: true },
     orderBy: { ordem: "asc" },
   });
-  for (const t of templates) {
-    await db.projectChecklistItem.create({
-      data: { projectId, stageId, titulo: t.titulo, ordem: t.ordem },
-    });
-  }
+  if (templates.length === 0) return;
+  await db.projectChecklistItem.createMany({
+    data: templates.map((t) => ({ projectId, stageId, titulo: t.titulo, ordem: t.ordem })),
+  });
 }
 
 // ─── Movimentação de etapa ─────────────────────────────────────────

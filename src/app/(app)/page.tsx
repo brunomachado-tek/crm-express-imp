@@ -102,8 +102,6 @@ export default async function DashboardPage({
   const atalhos = atalhosPeriodo();
   const periodoAtivo = (a: { de: string; ate: string }) => de === a.de && ate === a.ate;
 
-  const stages = await loadStages();
-
   const periodo =
     de || ate
       ? {
@@ -114,9 +112,10 @@ export default async function DashboardPage({
         }
       : {};
 
-  // projects e consultores são independentes: buscam em paralelo (uma ida ao
-  // banco em vez de duas). transitions depende dos ids dos projetos, vem depois.
-  const [projects, consultores] = await Promise.all([
+  // stages, projects e consultores são independentes: buscam em paralelo (uma ida
+  // ao banco em vez de três). transitions depende dos ids dos projetos, vem depois.
+  const [stages, projects, consultores] = await Promise.all([
+    loadStages(),
     db.project.findMany({
       where: { deleted: false, isHistorico: false, productLine: produtoSel, ...periodo },
       include: {
