@@ -12,7 +12,7 @@ export const INTAKE_STEPS = [
   {
     n: 1,
     titulo: "Empresa",
-    descricao: "Identificação e endereço de quem foi contratado.",
+    descricao: "O que complementa o cadastro (o resto já veio do contrato).",
   },
   {
     n: 2,
@@ -27,7 +27,7 @@ export const INTAKE_STEPS = [
   {
     n: 4,
     titulo: "Contratação",
-    descricao: "O que foi vendido e as expectativas de prazo.",
+    descricao: "Expectativas de prazo e treinamento.",
   },
   {
     n: 5,

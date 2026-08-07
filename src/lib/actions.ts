@@ -2180,21 +2180,15 @@ export async function createIntakeLink(formData: FormData) {
 function dadosDaEtapa(etapa: number, formData: FormData) {
   const dados: Record<string, unknown> = {};
 
+  // Os dados cadastrais da empresa, os módulos, o nº de licenças e o contato
+  // principal saíram do formulário do comercial (já vêm do contrato e dos 3
+  // anexos, e ficam pré-preenchidos no intake). Não são lidos aqui de propósito:
+  // ler campos ausentes zeraria o valor pré-preenchido ao salvar a etapa.
   if (etapa === 1) {
-    dados.razaoSocial = textoOuNull(formData.get("razaoSocial"));
     dados.nomeFantasia = textoOuNull(formData.get("nomeFantasia"));
-    dados.cnpj = textoOuNull(formData.get("cnpj"));
-    dados.cep = textoOuNull(formData.get("cep"));
-    dados.endereco = textoOuNull(formData.get("endereco"));
-    dados.cidade = textoOuNull(formData.get("cidade"));
-    dados.uf = textoOuNull(formData.get("uf"));
     dados.segmento = textoOuNull(formData.get("segmento"));
     dados.numUnidades = inteiroOuNull(formData.get("numUnidades"));
   } else if (etapa === 2) {
-    dados.contatoPrincipalNome = textoOuNull(formData.get("contatoPrincipalNome"));
-    dados.contatoPrincipalCargo = textoOuNull(formData.get("contatoPrincipalCargo"));
-    dados.contatoPrincipalEmail = textoOuNull(formData.get("contatoPrincipalEmail"));
-    dados.contatoPrincipalTelefone = textoOuNull(formData.get("contatoPrincipalTelefone"));
     dados.contatoOperacaoNome = textoOuNull(formData.get("contatoOperacaoNome"));
     dados.contatoOperacaoTelefone = textoOuNull(formData.get("contatoOperacaoTelefone"));
     dados.contatoTiNome = textoOuNull(formData.get("contatoTiNome"));
@@ -2210,8 +2204,6 @@ function dadosDaEtapa(etapa: number, formData: FormData) {
     dados.producaoPropria = textoOuNull(formData.get("producaoPropria"));
     dados.contextoOperacao = textoOuNull(formData.get("contextoOperacao"));
   } else if (etapa === 4) {
-    dados.modulos = joinChoices(formData.getAll("modulos").map(String));
-    dados.numLicencas = inteiroOuNull(formData.get("numLicencas"));
     const goLive = textoOuNull(formData.get("goLiveDesejado"));
     dados.goLiveDesejado = goLive ? new Date(goLive) : null;
     dados.urgencia = textoOuNull(formData.get("urgencia"));

@@ -74,14 +74,48 @@ export default async function RepassePage({
   const pct = Math.round((etapa / TOTAL_ETAPAS) * 100);
   const ultima = etapa === TOTAL_ETAPAS;
 
-  // Módulos contratáveis (a moldura fixa não é escolha do comercial).
-  const modulos = await db.moduleTemplate.findMany({
-    where: { active: true, productLine: intake.project.productLine, grupo: { not: "FIXO" } },
+  // Módulos já contratados (pré-preenchidos no intake), só para o resumo do topo.
+  const modulosContratados = await db.moduleTemplate.findMany({
+    where: { id: { in: splitChoices(intake.modulos) } },
+    select: { nome: true },
     orderBy: { ordem: "asc" },
   });
+  const local = [intake.cidade, intake.uf].filter(Boolean).join(", ");
+  const contatoPrincipal = intake.contatoPrincipalNome
+    ? `${intake.contatoPrincipalNome}${intake.contatoPrincipalCargo ? `, ${intake.contatoPrincipalCargo}` : ""}`
+    : null;
 
   return (
     <Shell cliente={cliente.razaoSocial}>
+      {/* Resumo do que já está no cadastro (vem do contrato e dos documentos):
+          o comercial confere aqui em vez de redigitar. O formulário abaixo é só
+          o que os documentos não trazem. */}
+      <div className="mb-6 rounded-lg border border-border bg-muted/40 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+          Já no cadastro Teknisa
+        </p>
+        <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
+          <ResumoLinha rotulo="Cliente" valor={intake.razaoSocial ?? cliente.razaoSocial} />
+          {intake.cnpj && <ResumoLinha rotulo="CNPJ" valor={intake.cnpj} />}
+          {local && <ResumoLinha rotulo="Cidade / UF" valor={local} />}
+          {intake.numLicencas != null && (
+            <ResumoLinha rotulo="Licenças ou filiais" valor={String(intake.numLicencas)} />
+          )}
+          {contatoPrincipal && <ResumoLinha rotulo="Contato principal" valor={contatoPrincipal} />}
+          {modulosContratados.length > 0 && (
+            <ResumoLinha
+              rotulo="Módulos contratados"
+              valor={modulosContratados.map((m) => m.nome).join(", ")}
+              full
+            />
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground mt-2.5">
+          Estes dados vêm do contrato e dos documentos anexados. Se algo estiver errado, avise a
+          Teknisa. Abaixo, complete só o que falta.
+        </p>
+      </div>
+
       {/* Progresso */}
       <div className="mb-6">
         <div className="flex items-baseline justify-between mb-2">
@@ -129,22 +163,9 @@ export default async function RepassePage({
 
         {etapa === 1 && (
           <>
-            <Campo id="razaoSocial" label="Razão social">
-              <TextoCurto id="razaoSocial" name="razaoSocial" defaultValue={intake.razaoSocial} required />
-            </Campo>
-            <Campo id="nomeFantasia" label="Nome fantasia" opcionalFlag>
-              <TextoCurto id="nomeFantasia" name="nomeFantasia" defaultValue={intake.nomeFantasia} />
-            </Campo>
             <div className="grid sm:grid-cols-2 gap-4">
-              <Campo id="cnpj" label="CNPJ">
-                <MaskedInput
-                  id="cnpj"
-                  name="cnpj"
-                  mascara="cnpj"
-                  defaultValue={intake.cnpj}
-                  placeholder="00.000.000/0000-00"
-                  className={campoInput}
-                />
+              <Campo id="nomeFantasia" label="Nome fantasia" opcionalFlag>
+                <TextoCurto id="nomeFantasia" name="nomeFantasia" defaultValue={intake.nomeFantasia} />
               </Campo>
               <Campo id="numUnidades" label="Quantas unidades ou lojas">
                 <TextoCurto
@@ -156,30 +177,6 @@ export default async function RepassePage({
                 />
               </Campo>
             </div>
-
-            <BlocoTitulo>Endereço</BlocoTitulo>
-            <Campo id="endereco" label="Logradouro">
-              <TextoCurto id="endereco" name="endereco" defaultValue={intake.endereco} />
-            </Campo>
-            <div className="grid sm:grid-cols-3 gap-4">
-              <Campo id="cep" label="CEP">
-                <MaskedInput
-                  id="cep"
-                  name="cep"
-                  mascara="cep"
-                  defaultValue={intake.cep}
-                  placeholder="00000-000"
-                  className={campoInput}
-                />
-              </Campo>
-              <Campo id="cidade" label="Cidade">
-                <TextoCurto id="cidade" name="cidade" defaultValue={intake.cidade} />
-              </Campo>
-              <Campo id="uf" label="UF">
-                <TextoCurto id="uf" name="uf" defaultValue={intake.uf} placeholder="SP" />
-              </Campo>
-            </div>
-
             <Campo label="Segmento" hint="O que mais se aproxima da operação do cliente.">
               <EscolhaUnica name="segmento" opcoes={SEGMENTOS} defaultValue={intake.segmento} />
             </Campo>
@@ -188,27 +185,10 @@ export default async function RepassePage({
 
         {etapa === 2 && (
           <>
-            <BlocoTitulo>Contato principal</BlocoTitulo>
             <p className="text-xs text-muted-foreground">
-              Quem decide e responde pelo projeto do lado do cliente.
+              O contato principal já está no cadastro (veja o resumo acima). Aqui precisamos de quem
+              a implantação vai procurar no dia a dia.
             </p>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Campo id="cpNome" label="Nome">
-                <TextoCurto id="cpNome" name="contatoPrincipalNome" defaultValue={intake.contatoPrincipalNome} required />
-              </Campo>
-              <Campo id="cpCargo" label="Cargo">
-                <TextoCurto id="cpCargo" name="contatoPrincipalCargo" defaultValue={intake.contatoPrincipalCargo} placeholder="Sócio, gerente, nutricionista" />
-              </Campo>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Campo id="cpEmail" label="Email">
-                <TextoCurto id="cpEmail" name="contatoPrincipalEmail" type="email" inputMode="email" defaultValue={intake.contatoPrincipalEmail} />
-              </Campo>
-              <Campo id="cpTel" label="Telefone ou WhatsApp">
-                <MaskedInput id="cpTel" name="contatoPrincipalTelefone" mascara="telefone" defaultValue={intake.contatoPrincipalTelefone} placeholder="(00) 00000-0000" className={campoInput} />
-              </Campo>
-            </div>
-
             <BlocoTitulo>Responsável pela operação</BlocoTitulo>
             <p className="text-xs text-muted-foreground">
               Quem vive a rotina e vai participar dos treinamentos.
@@ -273,34 +253,15 @@ export default async function RepassePage({
 
         {etapa === 4 && (
           <>
-            <Campo label="Módulos e serviços contratados" hint="Marque tudo que entrou no contrato.">
-              {modulos.length > 0 ? (
-                <EscolhaMultipla
-                  name="modulos"
-                  opcoes={modulos.map((m) => ({ value: m.id, label: m.nome, hint: m.descricao ?? undefined }))}
-                  selecionados={splitChoices(intake.modulos)}
-                  colunas={1}
-                />
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Nenhum módulo cadastrado para este produto ainda.
-                </p>
-              )}
+            <Campo id="goLiveDesejado" label="Go-live desejado" opcionalFlag hint="A data que o cliente espera estar operando.">
+              <input
+                id="goLiveDesejado"
+                name="goLiveDesejado"
+                type="date"
+                defaultValue={intake.goLiveDesejado ? new Date(intake.goLiveDesejado).toISOString().slice(0, 10) : ""}
+                className="w-full h-10 rounded-md border border-border bg-muted/50 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              />
             </Campo>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Campo id="numLicencas" label="Quantidade de licenças ou filiais">
-                <TextoCurto id="numLicencas" name="numLicencas" inputMode="numeric" defaultValue={intake.numLicencas} />
-              </Campo>
-              <Campo id="goLiveDesejado" label="Go-live desejado" opcionalFlag>
-                <input
-                  id="goLiveDesejado"
-                  name="goLiveDesejado"
-                  type="date"
-                  defaultValue={intake.goLiveDesejado ? new Date(intake.goLiveDesejado).toISOString().slice(0, 10) : ""}
-                  className="w-full h-10 rounded-md border border-border bg-muted/50 px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                />
-              </Campo>
-            </div>
             <Campo label="Urgência do projeto">
               <EscolhaUnica name="urgencia" opcoes={URGENCIA} defaultValue={intake.urgencia} colunas={3} />
             </Campo>
@@ -377,6 +338,15 @@ export default async function RepassePage({
         Suas respostas ficam salvas a cada etapa. Dá para fechar e voltar depois pelo mesmo link.
       </p>
     </Shell>
+  );
+}
+
+function ResumoLinha({ rotulo, valor, full }: { rotulo: string; valor: string; full?: boolean }) {
+  return (
+    <div className={full ? "sm:col-span-2" : undefined}>
+      <span className="text-muted-foreground">{rotulo}: </span>
+      <span className="font-medium">{valor}</span>
+    </div>
   );
 }
 
