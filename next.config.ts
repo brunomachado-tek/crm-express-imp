@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "5mb",
     },
   },
+  // As fontes de marca do PDF (TTF) são lidas do disco em runtime pela rota do
+  // acompanhamento. Força incluí-las no bundle da função serverless (senão o
+  // Netlify não empacota os .ttf e a geração do PDF quebra em produção).
+  outputFileTracingIncludes: {
+    "/api/projetos/[projetoId]/acompanhamento": ["./src/pdf/fonts/**"],
+  },
 };
 
 export default nextConfig;
