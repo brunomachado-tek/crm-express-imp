@@ -3,6 +3,19 @@
 > Spec de design. Data: 2026-08-06. Aprovado pelo Bruno em conversa de brainstorming.
 > Próximo passo depois da revisão: plano de implementação (writing-plans).
 
+> **Ajustes pós-teste (2026-08-06, mesmo dia):**
+> - **Nomenclatura das trilhas:** BASE = "Novos clientes" (sem dados na base);
+>   REDUZIDA = "Clientes da base" (já tem serviço Teknisa). Os rótulos vêm de
+>   `TRILHA_LABELS` em `format.ts`; os valores do enum seguem BASE/REDUZIDA.
+> - **Ordem da trilha Reduzida:** "Validação comercial CS" vem **depois** de
+>   "Alocado" (Contrato assinado, Alocado, Validação comercial CS, Cronograma, ...).
+> - **Checklist na Reduzida:** o editor de pipeline **tem** a opção de checklist por
+>   etapa nas duas trilhas; a Reduzida só não traz nenhum por padrão (o seed não cria).
+> - **Funil:** o switch de trilha fica **abaixo** do de serviço (TecFood/Retail),
+>   respeitando a hierarquia serviço → tipo de cliente.
+> - **Cronograma:** confirmado que as atividades vêm só dos módulos marcados no
+>   cadastro (mais a moldura fixa), nunca genéricas.
+
 ## Contexto e objetivo
 
 Clientes ativos podem contratar um **novo módulo** e passar por uma **nova

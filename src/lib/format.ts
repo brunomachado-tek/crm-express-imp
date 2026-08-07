@@ -5,6 +5,13 @@ export const PRODUCT_LABELS: Record<ProductLine, string> = {
   RETAIL: "Retail",
 };
 
+// Trilha de implantação. Atenção ao mapa: BASE = cliente novo (sem dados na base
+// Teknisa); REDUZIDA = cliente que já tem serviço contratado ("cliente da base").
+export const TRILHA_LABELS: Record<string, string> = {
+  BASE: "Novos clientes",
+  REDUZIDA: "Clientes da base",
+};
+
 export const ROLE_LABELS: Record<Role, string> = {
   DIRETORIA: "Diretoria",
   COORDENACAO: "Coordenação",

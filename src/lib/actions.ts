@@ -1250,8 +1250,10 @@ export async function createClientProject(formData: FormData) {
   // Cronograma: atividades dos módulos contratados + da moldura fixa.
   await gerarCronogramaProjeto(project.id, productLine, moduleIds);
 
-  // A trilha reduzida (upsell) não tem checklist por etapa.
-  if (!ehCliente) await instantiateChecklist(project.id, inicial.id);
+  // Instancia o checklist da etapa inicial (se a etapa tiver algum definido). As
+  // duas trilhas podem ter checklist por etapa; se a diretoria não definir nenhum,
+  // não instancia nada.
+  await instantiateChecklist(project.id, inicial.id);
   await db.stageTransition.create({
     data: { projectId: project.id, toStageId: inicial.id, byUserId: user.id },
   });

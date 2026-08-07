@@ -5,6 +5,7 @@ import { slaFor, somaDescontoAprovado } from "@/lib/sla";
 import { loadStages } from "@/lib/pipeline";
 import { FunilBoard, type CardBoard } from "@/components/funil/funil-board";
 import { canMoveStage } from "@/lib/permissions";
+import { TRILHA_LABELS } from "@/lib/format";
 import type { ProductLine } from "@prisma/client";
 
 export default async function FunilPage({
@@ -75,7 +76,9 @@ export default async function FunilPage({
               : "Clique em um card para abrir o projeto."}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Hierarquia: primeiro o serviço (TecFood/Retail), depois o tipo de
+            cliente (novos clientes / clientes da base). */}
+        <div className="flex flex-col items-end gap-2">
           <div className="flex rounded-lg border border-border bg-card p-1 gap-1">
             {(["TECFOOD", "RETAIL"] as const).map((f) => (
               <Link
@@ -93,17 +96,16 @@ export default async function FunilPage({
               </Link>
             ))}
           </div>
-          {/* Trilha: Base (cliente novo) x Reduzida (upsell de módulo novo) */}
           <div className="flex rounded-lg border border-border bg-card p-1 gap-1">
             {(["BASE", "REDUZIDA"] as const).map((t) => (
               <Link
                 key={t}
                 href={`/funil?funil=${funil}&trilha=${t}`}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                   trilha === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {t === "BASE" ? "Base" : "Reduzida"}
+                {TRILHA_LABELS[t]}
               </Link>
             ))}
           </div>

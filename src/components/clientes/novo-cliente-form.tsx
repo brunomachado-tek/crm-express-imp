@@ -166,16 +166,16 @@ export function NovoClienteForm({ modules }: { modules: Modulo[] }) {
 
       {/* Passo 0: cliente novo x cliente Teknisa (upsell, trilha reduzida) */}
       <section className="bg-card border border-border rounded-lg p-6">
-        <h2 className="text-sm font-semibold">Este cadastro é de</h2>
+        <h2 className="text-sm font-semibold">Tipo de cliente</h2>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Cliente novo segue a implantação completa. Cliente Teknisa contratando um módulo novo
-          segue a implantação reduzida (só o contrato, sem plano de projeto e sem checklist).
+          Cliente novo segue a implantação completa. Cliente da base (que já tem serviço Teknisa e
+          contratou um módulo novo) segue a implantação reduzida, só com o contrato.
         </p>
         <div className="mt-4 grid sm:grid-cols-2 gap-3">
           {(
             [
-              { v: false, t: "Não é cliente Teknisa", d: "Cliente novo. Implantação completa." },
-              { v: true, t: "É cliente Teknisa", d: "Novo módulo de quem já é cliente. Implantação reduzida." },
+              { v: false, t: "Novo cliente", d: "Ainda não tem serviço Teknisa. Implantação completa." },
+              { v: true, t: "Cliente da base", d: "Já tem serviço Teknisa, contratou novo módulo. Implantação reduzida." },
             ] as const
           ).map((o) => (
             <button

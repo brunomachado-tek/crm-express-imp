@@ -105,12 +105,12 @@ async function main() {
     for (const s of pipeline) stage[s.key] = all.find((x) => x.nome === s.nome);
   }
 
-  // Etapas da trilha REDUZIDA (upsell de cliente existente): as mesmas da Base,
-  // com a validação comercial colapsada em "Validação comercial CS". Sem checklist.
+  // Etapas da trilha REDUZIDA ("clientes da base": upsell de cliente existente):
+  // as mesmas da Base, com a validação comercial do CS DEPOIS do "Alocado".
   const reduzidas = [
     { nome: "Contrato assinado", idealDays: 3 },
-    { nome: "Validação comercial CS", idealDays: 5 },
     { nome: "Alocado", idealDays: 3 },
+    { nome: "Validação comercial CS", idealDays: 5 },
     { nome: "Cronograma", idealDays: 7 },
     { nome: "Implantação", idealDays: 45 },
     { nome: "Go-live", idealDays: 7 },
@@ -118,9 +118,19 @@ async function main() {
     { nome: "Finalizado", idealDays: 5, isFinal: true },
     { nome: "CS ativo", isFinal: true },
   ];
-  if ((await prisma.pipelineStage.count({ where: { trilha: "REDUZIDA" } })) === 0) {
-    for (let i = 0; i < reduzidas.length; i++) {
-      const s = reduzidas[i];
+  // Cria as que faltam e garante a ORDEM canônica (auto-corrige instalações
+  // anteriores que criaram a trilha reduzida fora de ordem). Só mexe no `ordem`
+  // de etapas já existentes, para preservar edições de nome/prazo pela diretoria.
+  for (let i = 0; i < reduzidas.length; i++) {
+    const s = reduzidas[i];
+    const existente = await prisma.pipelineStage.findFirst({
+      where: { trilha: "REDUZIDA", nome: s.nome },
+    });
+    if (existente) {
+      if (existente.ordem !== i) {
+        await prisma.pipelineStage.update({ where: { id: existente.id }, data: { ordem: i } });
+      }
+    } else {
       await prisma.pipelineStage.create({
         data: { nome: s.nome, ordem: i, idealDays: s.idealDays ?? null, isFinal: !!s.isFinal, trilha: "REDUZIDA" },
       });

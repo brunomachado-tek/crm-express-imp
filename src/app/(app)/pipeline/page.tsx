@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { canEditPipeline } from "@/lib/permissions";
+import { TRILHA_LABELS } from "@/lib/format";
 import {
   addPipelineStage,
   savePipelineStage,
@@ -109,15 +110,15 @@ export default async function PipelinePage({
                 ativo ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
               }`}
             >
-              {t === "BASE" ? "Base" : "Reduzida"}
+              {TRILHA_LABELS[t]}
             </Link>
           );
         })}
       </div>
       {trilha === "REDUZIDA" && (
         <p className="text-xs text-muted-foreground">
-          Trilha do upsell (cliente Teknisa contratando novo módulo). Implantação mais curta e sem
-          checklist por etapa.
+          Funil dos clientes da base (quem já tem serviço Teknisa e contratou um novo módulo).
+          Implantação mais curta.
         </p>
       )}
 
@@ -224,7 +225,7 @@ export default async function PipelinePage({
                   <p className="text-sm font-medium">{s.nome}</p>
                 )}
 
-                {canEdit && trilha === "BASE" && (
+                {canEdit && (
                   <div className="mt-3 pt-3 border-t border-border">
                     <p className={`${fieldLabel} mb-2`}>Checklist obrigatório desta etapa</p>
                     <ul className="space-y-1.5 mb-2">
