@@ -53,7 +53,14 @@ export default async function AlertasPage() {
               <Bell className={`h-4 w-4 mt-0.5 shrink-0 ${n.readAt ? "text-muted-foreground" : "text-primary"}`} />
               <div className="flex-1 min-w-0">
                 {n.projectId ? (
-                  <Link href={`/projetos/${n.projectId}`} className="text-sm font-medium hover:text-primary">
+                  <Link
+                    href={
+                      n.activityId
+                        ? `/projetos/${n.projectId}#atividade-${n.activityId}`
+                        : `/projetos/${n.projectId}`
+                    }
+                    className="text-sm font-medium hover:text-primary"
+                  >
                     {n.titulo}
                   </Link>
                 ) : (

@@ -1539,7 +1539,8 @@ export async function reorderActivities(formData: FormData) {
 async function notificarMencoes(
   texto: string,
   autor: { id: string; name: string },
-  projectId: string | null
+  projectId: string | null,
+  activityId: string | null = null
 ) {
   const norm = (s: string) =>
     s
@@ -1565,6 +1566,7 @@ async function notificarMencoes(
       data: {
         userId: uid,
         projectId,
+        activityId,
         tipo: "MENCAO",
         titulo: `${autor.name} mencionou você`,
         corpo: texto.length > 160 ? texto.slice(0, 157) + "..." : texto,
@@ -1621,7 +1623,7 @@ export async function updateActivity(formData: FormData) {
   });
   // menção @nome na observação notifica os mencionados (só quando a obs muda)
   if (novaObs && novaObs !== activity.observacao) {
-    await notificarMencoes(novaObs, user, activity.projectId);
+    await notificarMencoes(novaObs, user, activity.projectId, activity.id);
   }
 
   revalidatePath(`/projetos/${activity.projectId}`);

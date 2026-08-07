@@ -53,6 +53,34 @@ h3 {
   .no-print {
     display: none !important;
   }
+  /* Reset dos ancestrais: o body é flex e a folha tem min-height de tela, o que
+     fazia o Chrome imprimir uma página em branco. Zera altura/flex/overflow para
+     o conteúdo fluir normalmente no papel. */
+  html,
+  body {
+    height: auto !important;
+    min-height: 0 !important;
+    background: #fff !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+  .ac-screen {
+    display: block !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+  .ac-folha {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
   /* garante que as cores da marca (chips, réguas, logo) saiam no papel */
   * {
     -webkit-print-color-adjust: exact;

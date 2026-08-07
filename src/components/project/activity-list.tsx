@@ -233,7 +233,8 @@ export function ActivityList({
                     <>
               <DateBlock a={a} />
               <div
-                className={`flex-1 min-w-0 rounded-lg border p-4 ${
+                id={`atividade-${a.id}`}
+                className={`flex-1 min-w-0 rounded-lg border p-4 scroll-mt-24 transition-shadow ${
                   a.status === "CONCLUIDA"
                     ? "border-border/60 bg-muted/30"
                     : a.status === "EM_ANDAMENTO"
@@ -398,9 +399,12 @@ export function ActivityList({
         <form action={addActivity} className="mt-5 border-t border-border pt-5">
           <input type="hidden" name="projectId" value={projectId} />
 
-          <h3 className="text-sm font-semibold inline-flex items-center gap-2 mb-3">
-            <Plus className="h-4 w-4 text-primary" /> Criar nova atividade
-          </h3>
+          <details className="group/nova">
+            <summary className="list-none w-fit cursor-pointer [&::-webkit-details-marker]:hidden">
+              <span className="inline-flex items-center gap-2 h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-hover transition-colors">
+                <Plus className="h-4 w-4" /> Criar atividade
+              </span>
+            </summary>
 
           {sugestoesTitulo.length > 0 && (
             <datalist id={listaId}>
@@ -414,7 +418,7 @@ export function ActivityList({
           {/* Duas linhas com proporções definidas em vez de quebra automática:
               o título domina a primeira linha e os campos curtos têm largura
               fixa, então nada fica espremido nem sobra vão no fim. */}
-          <div className="space-y-3">
+          <div className="space-y-3 mt-4">
             <div className="flex flex-wrap gap-3 items-end">
               <div className="flex-1 min-w-[240px] space-y-1">
                 <label htmlFor="nova-atividade" className={fieldLabel}>
@@ -510,6 +514,7 @@ export function ActivityList({
               </SubmitButton>
             </div>
           </div>
+          </details>
         </form>
       ) : (
         <p className="mt-5 border-t border-border pt-4 flex items-center gap-1.5 text-xs text-muted-foreground">

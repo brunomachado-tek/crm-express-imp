@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Undo2 } from "lucide-react";
+import { List } from "lucide-react";
 
 export const ENVOLVIDO_OPTIONS = [
   "Nutricionista",
@@ -38,7 +38,7 @@ export function EnvolvidoField({ id, defaultValue }: { id: string; defaultValue?
           title="Escolher da lista"
           className="h-9 w-9 shrink-0 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted transition-colors"
         >
-          <Undo2 className="h-3.5 w-3.5" />
+          <List className="h-3.5 w-3.5" />
         </button>
       </div>
     );

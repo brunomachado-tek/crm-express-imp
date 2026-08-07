@@ -10,6 +10,7 @@ import { ProductBadge, StatusBadge, AditivoBadge } from "@/components/badges";
 import { StageStepper } from "@/components/project/stage-stepper";
 import { MilestoneCard, SemMarcoCard } from "@/components/project/milestones";
 import { DelayCard } from "@/components/project/delay-card";
+import { ScrollToActivity } from "@/components/project/scroll-to-activity";
 import { ConsultantCard } from "@/components/project/consultant-card";
 import { DocumentsCard } from "@/components/project/documents-card";
 import { IntakeCard } from "@/components/project/intake-card";
@@ -162,6 +163,7 @@ export default async function ProjetoPage({
 
   return (
     <div className="max-w-7xl space-y-5">
+      <ScrollToActivity />
       {/* Header */}
       <div>
         <Link
