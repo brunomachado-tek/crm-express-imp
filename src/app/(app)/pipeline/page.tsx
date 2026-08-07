@@ -98,22 +98,26 @@ export default async function PipelinePage({
         </p>
       </div>
 
-      {/* Trilha: Base (cliente novo) x Reduzida (upsell de cliente existente) */}
-      <div className="inline-flex rounded-md border border-border bg-card p-0.5 text-sm">
-        {(["BASE", "REDUZIDA"] as const).map((t) => {
-          const ativo = trilha === t;
-          return (
+      {/* Tipo de cliente: qual funil está sendo editado (mesmo controle do funil). */}
+      <div className="flex flex-col gap-1.5">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          Tipo de cliente
+        </span>
+        <div className="inline-flex rounded-lg bg-muted p-1 gap-1 self-start">
+          {(["BASE", "REDUZIDA"] as const).map((t) => (
             <Link
               key={t}
               href={`/pipeline?trilha=${t}`}
-              className={`px-3 py-1.5 rounded font-medium transition-colors ${
-                ativo ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
+              className={`px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                trilha === t
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {TRILHA_LABELS[t]}
             </Link>
-          );
-        })}
+          ))}
+        </div>
       </div>
       {trilha === "REDUZIDA" && (
         <p className="text-xs text-muted-foreground">

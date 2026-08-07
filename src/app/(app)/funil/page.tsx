@@ -64,7 +64,7 @@ export default async function FunilPage({
 
   return (
     <div className="space-y-4 h-full flex flex-col">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="space-y-3">
         <div>
           <h1 className="text-2xl font-semibold">Funil de implantação</h1>
           <p className="text-sm text-muted-foreground">
@@ -76,38 +76,54 @@ export default async function FunilPage({
               : "Clique em um card para abrir o projeto."}
           </p>
         </div>
-        {/* Hierarquia: primeiro o serviço (TecFood/Retail), depois o tipo de
-            cliente (novos clientes / clientes da base). */}
-        <div className="flex flex-col items-end gap-2">
-          <div className="flex rounded-lg border border-border bg-card p-1 gap-1">
-            {(["TECFOOD", "RETAIL"] as const).map((f) => (
-              <Link
-                key={f}
-                href={`/funil?funil=${f}&trilha=${trilha}`}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  funil === f
-                    ? f === "TECFOOD"
-                      ? "bg-tecfood text-white"
-                      : "bg-retail text-white"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {f === "TECFOOD" ? "TecFood" : "Retail"}
-              </Link>
-            ))}
+
+        {/* Barra de filtros. Hierarquia: primeiro o serviço (color-coded, chama o
+            olho), depois o tipo de cliente (neutro, secundário). */}
+        <div className="flex items-end gap-4 flex-wrap">
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Serviço
+            </span>
+            <div className="inline-flex rounded-lg bg-muted p-1 gap-1">
+              {(["TECFOOD", "RETAIL"] as const).map((f) => (
+                <Link
+                  key={f}
+                  href={`/funil?funil=${f}&trilha=${trilha}`}
+                  className={`px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    funil === f
+                      ? f === "TECFOOD"
+                        ? "bg-tecfood text-white"
+                        : "bg-retail text-white"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {f === "TECFOOD" ? "TecFood" : "Retail"}
+                </Link>
+              ))}
+            </div>
           </div>
-          <div className="flex rounded-lg border border-border bg-card p-1 gap-1">
-            {(["BASE", "REDUZIDA"] as const).map((t) => (
-              <Link
-                key={t}
-                href={`/funil?funil=${funil}&trilha=${t}`}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                  trilha === t ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {TRILHA_LABELS[t]}
-              </Link>
-            ))}
+
+          <div className="w-px self-stretch bg-border" />
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Tipo de cliente
+            </span>
+            <div className="inline-flex rounded-lg bg-muted p-1 gap-1">
+              {(["BASE", "REDUZIDA"] as const).map((t) => (
+                <Link
+                  key={t}
+                  href={`/funil?funil=${funil}&trilha=${t}`}
+                  className={`px-3.5 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    trilha === t
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {TRILHA_LABELS[t]}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </div>
