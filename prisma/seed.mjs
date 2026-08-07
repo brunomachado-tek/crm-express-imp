@@ -158,6 +158,31 @@ async function main() {
     }
   }
 
+  // Checklist da trilha REDUZIDA ("clientes da base"): espelha o dos clientes
+  // novos nas etapas equivalentes; a etapa nova "Validação comercial CS" recebe
+  // os mesmos itens da validação comercial dos novos clientes. Idempotente: só
+  // cria numa etapa que ainda não tem nenhum item.
+  const checklistReduzidaPorNome = {
+    "Contrato assinado": checklists.CONTRATO_ASSINADO,
+    Alocado: checklists.ALOCADO,
+    "Validação comercial CS": checklists.VALIDACAO_COMERCIAL,
+    Cronograma: checklists.CRONOGRAMA,
+    Implantação: checklists.IMPLANTACAO,
+    "Go-live": checklists.GO_LIVE,
+    Acompanhamento: checklists.ACOMPANHAMENTO,
+    Finalizado: checklists.FINALIZADO,
+  };
+  for (const [nome, items] of Object.entries(checklistReduzidaPorNome)) {
+    const st = await prisma.pipelineStage.findFirst({ where: { trilha: "REDUZIDA", nome } });
+    if (!st) continue;
+    const already = await prisma.stageChecklistTemplate.count({ where: { stageId: st.id } });
+    if (already > 0) continue;
+    let ordem = 0;
+    for (const titulo of items) {
+      await prisma.stageChecklistTemplate.create({ data: { stageId: st.id, titulo, ordem: ordem++ } });
+    }
+  }
+
   // ── Catálogo de módulos e atividades (TecFood: escopo real da Mariana) ──
   // FIXO = moldura da implantação (entra em todo projeto). BASICO/COMPLETO =
   // módulos contratáveis. ADICIONAL = produto à parte (APP MyMenu). As
